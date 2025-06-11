@@ -2,7 +2,7 @@
 
 A comprehensive social media platform built with TypeScript, featuring a React frontend, Express backend, and MongoDB database. The platform includes membership tiers, social authentication, and content management capabilities.
 
-## 🎉 **CURRENT STATUS: FULLY OPERATIONAL**
+## 🎉 **CURRENT STATUS: FULLY OPERATIONAL WITH INTERACTIVE API DOCS**
 
 ✅ **Development Environment Ready**
 - Backend API running on port 5001
@@ -11,6 +11,7 @@ A comprehensive social media platform built with TypeScript, featuring a React f
 - Authentication system configured
 - Tailwind CSS styling working
 - All TypeScript compilation errors resolved
+- **📚 Interactive Swagger API Documentation active**
 
 ## 🏗️ Architecture
 
@@ -263,6 +264,10 @@ npm run test:backend           # Backend tests
 # Linting
 npm run lint                   # Lint all packages
 npm run lint:fix               # Fix lint issues
+
+# Documentation
+open http://localhost:5001/api-docs  # Open Swagger docs
+curl http://localhost:5001/health    # Test API health
 ```
 
 ### Code Quality
