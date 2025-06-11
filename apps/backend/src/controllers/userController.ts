@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/User';
+import { User } from "../models/User";
 
 export class UserController {
   // Get all users (Admin only)
   public getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { page = 1, limit = 10, search, membershipType } = req.query;
+      const { page = 1, limit = 10, search, membershipTier } = req.query;
 
       // Build query
       const query: any = {};
@@ -17,8 +17,8 @@ export class UserController {
         ];
       }
       
-      if (membershipType) {
-        query.membershipType = membershipType;
+      if (membershipTier) {
+        query.membershipTier = membershipTier;
       }
 
       const skip = (Number(page) - 1) * Number(limit);
@@ -139,7 +139,7 @@ export class UserController {
       const membershipStats = await User.aggregate([
         {
           $group: {
-            _id: '$membershipType',
+            _id: '$membershipTier',
             count: { $sum: 1 }
           }
         }

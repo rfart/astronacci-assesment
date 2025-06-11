@@ -1,17 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import Article from '../models/Article';
-import { MembershipType, ContentType } from '@astronacci/shared';
-import { membershipLimits } from '@astronacci/shared';
+import { Article } from "../models/Article";
+import { MembershipTier, MEMBERSHIP_LIMITS } from '@astronacci/shared';
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
 export class ArticleController {
   // Get all articles with membership filtering
-  public getArticles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getArticles = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
       const user = req.user;
 
       // Build query
-      const query: any = { isPublished: true };
+      const query: any = {};
       
       if (category) {
         query.category = category;
@@ -26,10 +29,10 @@ export class ArticleController {
       }
 
       // Apply membership limits
-      let articleLimit = membershipLimits[MembershipType.TYPE_A].articles;
+      let articleLimit = MEMBERSHIP_LIMITS[MembershipTier.TYPE_A].articles;
       if (user) {
-        const userMembership = user.membershipType || MembershipType.TYPE_A;
-        articleLimit = membershipLimits[userMembership].articles;
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        articleLimit = MEMBERSHIP_LIMITS[userMembership].articles;
       }
 
       const skip = (Number(page) - 1) * Number(limit);
@@ -51,12 +54,9 @@ export class ArticleController {
       }
 
       const articles = await Article.find(query)
-        .populate('category', 'name')
-        .populate('author', 'name email')
-        .sort({ createdAt: -1 })
+        .sort({ publishedAt: -1 })
         .skip(skip)
-        .limit(queryLimit)
-        .select(user ? undefined : '-content'); // Hide content for non-authenticated users
+        .limit(queryLimit);
 
       const total = await Article.countDocuments(query);
 
@@ -76,16 +76,14 @@ export class ArticleController {
   };
 
   // Get single article
-  public getArticle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getArticle = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const user = req.user;
 
-      const article = await Article.findById(id)
-        .populate('category', 'name')
-        .populate('author', 'name email');
+      const article = await Article.findById(id);
 
-      if (!article || !article.isPublished) {
+      if (!article) {
         res.status(404).json({
           success: false,
           message: 'Article not found',
@@ -95,29 +93,20 @@ export class ArticleController {
 
       // Check membership access
       if (user) {
-        const userMembership = user.membershipType || MembershipType.TYPE_A;
-        const limit = membershipLimits[userMembership].articles;
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        const limit = MEMBERSHIP_LIMITS[userMembership].articles;
         
-        if (limit !== -1) {
-          // Check if user has viewed this many articles
-          const viewedCount = await Article.countDocuments({
-            _id: { $ne: id },
-            'views.user': user.id,
+        if (limit !== -1 && user.articlesRead >= limit) {
+          res.status(403).json({
+            success: false,
+            message: 'Membership limit reached. Please upgrade your membership.',
           });
-
-          if (viewedCount >= limit) {
-            res.status(403).json({
-              success: false,
-              message: 'Membership limit reached. Please upgrade your membership.',
-            });
-            return;
-          }
+          return;
         }
 
-        // Add view
-        if (!article.views.some((view: any) => view.user.toString() === user.id)) {
-          article.views.push({ user: user.id, viewedAt: new Date() });
-          await article.save();
+        // Increment user's articles read count if they can access content
+        if (user.canAccessContent?.('article')) {
+          await user.incrementUsage('article');
         }
       }
 
@@ -131,23 +120,19 @@ export class ArticleController {
   };
 
   // Create article (Admin/CMS)
-  public createArticle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public createArticle = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const articleData = {
         ...req.body,
-        author: req.user?.id,
+        author: req.user?._id?.toString() ?? req.user?.name ?? 'Unknown',
       };
 
       const article = new Article(articleData);
       await article.save();
 
-      const populatedArticle = await Article.findById(article._id)
-        .populate('category', 'name')
-        .populate('author', 'name email');
-
       res.status(201).json({
         success: true,
-        data: populatedArticle,
+        data: article,
         message: 'Article created successfully',
       });
     } catch (error) {
@@ -156,7 +141,7 @@ export class ArticleController {
   };
 
   // Update article
-  public updateArticle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public updateArticle = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       
@@ -164,7 +149,7 @@ export class ArticleController {
         id,
         req.body,
         { new: true, runValidators: true }
-      ).populate('category', 'name').populate('author', 'name email');
+      );
 
       if (!article) {
         res.status(404).json({
@@ -185,7 +170,7 @@ export class ArticleController {
   };
 
   // Delete article
-  public deleteArticle = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public deleteArticle = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       
@@ -208,3 +193,5 @@ export class ArticleController {
     }
   };
 }
+
+export const articleController = new ArticleController();

@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { MembershipType } from '@astronacci/shared';
+import { User } from "../models/User";
+import { MembershipTier } from '@astronacci/shared';
 
 export class AuthController {
   // Generate JWT token
   private generateToken(userId: string): string {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET!, {
+    return jwt.sign({ userId: userId }, process.env.JWT_SECRET!, {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     });
   }
@@ -28,7 +28,7 @@ export class AuthController {
   // Get current user profile
   public getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const user = await User.findById(req.user?.id).select('-password');
+      const user = await User.findById((req.user as any)?._id).select('-password');
       if (!user) {
         res.status(404).json({
           success: false,
@@ -49,9 +49,9 @@ export class AuthController {
   // Update user membership
   public updateMembership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { membershipType } = req.body;
+      const { membershipTier } = req.body;
       
-      if (!Object.values(MembershipType).includes(membershipType)) {
+      if (!Object.values(MembershipTier).includes(membershipTier)) {
         res.status(400).json({
           success: false,
           message: 'Invalid membership type',
@@ -60,9 +60,9 @@ export class AuthController {
       }
 
       const user = await User.findByIdAndUpdate(
-        req.user?.id,
+        (req.user as any)?._id,
         { 
-          membershipType,
+          membershipTier,
           membershipStartDate: new Date(),
         },
         { new: true }

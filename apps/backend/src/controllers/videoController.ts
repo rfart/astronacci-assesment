@@ -1,17 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import Video from '../models/Video';
-import { MembershipType } from '@astronacci/shared';
-import { membershipLimits } from '@astronacci/shared';
+import { Video } from '../models/Video';
+import { MembershipTier, MEMBERSHIP_LIMITS } from '@astronacci/shared';
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
 export class VideoController {
   // Get all videos with membership filtering
-  public getVideos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getVideos = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
       const user = req.user;
 
       // Build query
-      const query: any = { isPublished: true };
+      const query: any = {};
       
       if (category) {
         query.category = category;
@@ -26,10 +29,10 @@ export class VideoController {
       }
 
       // Apply membership limits
-      let videoLimit = membershipLimits[MembershipType.TYPE_A].videos;
+      let videoLimit = MEMBERSHIP_LIMITS[MembershipTier.TYPE_A].videos;
       if (user) {
-        const userMembership = user.membershipType || MembershipType.TYPE_A;
-        videoLimit = membershipLimits[userMembership].videos;
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        videoLimit = MEMBERSHIP_LIMITS[userMembership].videos;
       }
 
       const skip = (Number(page) - 1) * Number(limit);
@@ -51,9 +54,7 @@ export class VideoController {
       }
 
       const videos = await Video.find(query)
-        .populate('category', 'name')
-        .populate('author', 'name email')
-        .sort({ createdAt: -1 })
+        .sort({ publishedAt: -1 })
         .skip(skip)
         .limit(queryLimit);
 
@@ -75,16 +76,14 @@ export class VideoController {
   };
 
   // Get single video
-  public getVideo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const user = req.user;
 
-      const video = await Video.findById(id)
-        .populate('category', 'name')
-        .populate('author', 'name email');
+      const video = await Video.findById(id);
 
-      if (!video || !video.isPublished) {
+      if (!video) {
         res.status(404).json({
           success: false,
           message: 'Video not found',
@@ -94,29 +93,20 @@ export class VideoController {
 
       // Check membership access
       if (user) {
-        const userMembership = user.membershipType || MembershipType.TYPE_A;
-        const limit = membershipLimits[userMembership].videos;
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        const limit = MEMBERSHIP_LIMITS[userMembership].videos;
         
-        if (limit !== -1) {
-          // Check if user has viewed this many videos
-          const viewedCount = await Video.countDocuments({
-            _id: { $ne: id },
-            'views.user': user.id,
+        if (limit !== -1 && user.videosWatched >= limit) {
+          res.status(403).json({
+            success: false,
+            message: 'Membership limit reached. Please upgrade your membership.',
           });
-
-          if (viewedCount >= limit) {
-            res.status(403).json({
-              success: false,
-              message: 'Membership limit reached. Please upgrade your membership.',
-            });
-            return;
-          }
+          return;
         }
 
-        // Add view
-        if (!video.views.some((view: any) => view.user.toString() === user.id)) {
-          video.views.push({ user: user.id, viewedAt: new Date() });
-          await video.save();
+        // Increment user's videos watched count if they can access content
+        if (user.canAccessContent?.('video')) {
+          await user.incrementUsage('video');
         }
       }
 
@@ -130,23 +120,19 @@ export class VideoController {
   };
 
   // Create video (Admin/CMS)
-  public createVideo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public createVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const videoData = {
         ...req.body,
-        author: req.user?.id,
+        author: (req.user as any)?._id?.toString() ?? (req.user as any)?.name ?? 'Unknown',
       };
 
       const video = new Video(videoData);
       await video.save();
 
-      const populatedVideo = await Video.findById(video._id)
-        .populate('category', 'name')
-        .populate('author', 'name email');
-
       res.status(201).json({
         success: true,
-        data: populatedVideo,
+        data: video,
         message: 'Video created successfully',
       });
     } catch (error) {
@@ -155,7 +141,7 @@ export class VideoController {
   };
 
   // Update video
-  public updateVideo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public updateVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       
@@ -163,7 +149,7 @@ export class VideoController {
         id,
         req.body,
         { new: true, runValidators: true }
-      ).populate('category', 'name').populate('author', 'name email');
+      );
 
       if (!video) {
         res.status(404).json({
@@ -184,7 +170,7 @@ export class VideoController {
   };
 
   // Delete video
-  public deleteVideo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public deleteVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       
@@ -207,3 +193,5 @@ export class VideoController {
     }
   };
 }
+
+export const videoController = new VideoController();

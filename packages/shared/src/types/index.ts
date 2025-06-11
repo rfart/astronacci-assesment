@@ -4,6 +4,11 @@ export enum MembershipTier {
   TYPE_C = 'TYPE_C'
 }
 
+export enum ContentType {
+  ARTICLE = 'article',
+  VIDEO = 'video'
+}
+
 export interface MembershipLimits {
   articles: number;
   videos: number;

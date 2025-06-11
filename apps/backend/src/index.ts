@@ -32,19 +32,19 @@ const limiter = rateLimit({
 });
 
 // Middleware
-app.use(limiter);
+app.use(limiter as any);
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(compression());
+app.use(compression() as any);
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Passport middleware
-app.use(passport.initialize());
+app.use(passport.initialize() as any);
 
 // Connect to MongoDB
 connectDB();

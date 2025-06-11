@@ -73,7 +73,7 @@ userSchema.methods.canAccessContent = function(contentType: 'article' | 'video')
     [MembershipTier.TYPE_C]: { articles: -1, videos: -1 } // unlimited
   };
 
-  const limit = limits[this.membershipTier];
+  const limit = limits[this.membershipTier as MembershipTier];
   
   if (contentType === 'article') {
     return limit.articles === -1 || this.articlesRead < limit.articles;

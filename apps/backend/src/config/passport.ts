@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { User } from '../models/User';
-import { MembershipType } from '@astronacci/shared';
+import { MembershipTier } from '@astronacci/shared';
 
 export const configurePassport = (): void => {
   // Google OAuth Strategy
@@ -37,14 +37,14 @@ export const configurePassport = (): void => {
         avatar: profile.photos?.[0]?.value,
         socialProvider: 'google',
         socialId: profile.id,
-        membershipType: MembershipType.TYPE_A, // Default tier
+        membershipTier: MembershipTier.TYPE_A, // Default tier
         isActive: true
       });
 
       await user.save();
       return done(null, user);
     } catch (error) {
-      return done(error, null);
+      return done(error, false);
     }
   }));
 
@@ -81,7 +81,7 @@ export const configurePassport = (): void => {
         avatar: profile.photos?.[0]?.value,
         socialProvider: 'facebook',
         socialId: profile.id,
-        membershipType: MembershipType.TYPE_A, // Default tier
+        membershipTier: MembershipTier.TYPE_A, // Default tier
         isActive: true
       });
 
@@ -102,7 +102,7 @@ export const configurePassport = (): void => {
       const user = await User.findById(id);
       done(null, user);
     } catch (error) {
-      done(error, null);
+      done(error, false);
     }
   });
 };

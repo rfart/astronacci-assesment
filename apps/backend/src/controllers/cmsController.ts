@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import Article from '../models/Article';
-import Video from '../models/Video';
-import User from '../models/User';
-import Category from '../models/Category';
+import { Article } from "../models/Article";
+import { Video } from "../models/Video";
+import { User } from "../models/User";
+import { Category } from "../models/Category";
 
 export class CMSController {
   // Get dashboard statistics
@@ -216,7 +216,7 @@ export class CMSController {
           );
           break;
         case 'delete':
-          result = await Model.deleteMany({ _id: { $in: ids } });
+          result = await (Model as any).deleteMany({ _id: { $in: ids } });
           break;
         case 'update':
           if (!data) {
