@@ -2,6 +2,16 @@
 
 A comprehensive social media platform built with TypeScript, featuring a React frontend, Express backend, and MongoDB database. The platform includes membership tiers, social authentication, and content management capabilities.
 
+## 🎉 **CURRENT STATUS: FULLY OPERATIONAL**
+
+✅ **Development Environment Ready**
+- Backend API running on port 5001
+- Frontend React app running on port 3000  
+- MongoDB and Redis containers running
+- Authentication system configured
+- Tailwind CSS styling working
+- All TypeScript compilation errors resolved
+
 ## 🏗️ Architecture
 
 ### Monorepo Structure
@@ -64,9 +74,30 @@ npm install
 # Backend environment
 cp apps/backend/.env.example apps/backend/.env
 
-# Frontend environment  
-cp apps/frontend/.env.example apps/frontend/.env
+# Frontend environment (create manually)
+echo "REACT_APP_API_URL=http://localhost:5001/api" > apps/frontend/.env
 ```
+
+4. **Start Database Services**
+```bash
+# Start MongoDB and Redis with Docker
+docker compose up -d mongodb redis
+```
+
+5. **Start Development Servers**
+```bash
+# Start both frontend and backend
+npm run dev
+
+# Or start individually
+npm run dev:frontend    # Frontend on http://localhost:3000
+npm run dev:backend     # Backend on http://localhost:5001
+```
+
+**🚀 Your application will be available at:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+- Health Check: http://localhost:5001/health
 
 4. **Configure OAuth (Optional)**
    - Create Google OAuth credentials

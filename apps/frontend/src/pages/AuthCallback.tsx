@@ -20,10 +20,26 @@ const AuthCallback: React.FC = () => {
   }, [searchParams, login, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto"></div>
-        <p className="mt-4 text-lg text-gray-600">Completing authentication...</p>
+    <div style={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          animation: 'spin 1s linear infinite',
+          borderRadius: '50%',
+          height: '128px',
+          width: '128px',
+          borderBottom: '2px solid #2563eb',
+          margin: '0 auto'
+        }}></div>
+        <p style={{ 
+          marginTop: '16px', 
+          fontSize: '18px', 
+          color: '#6b7280' 
+        }}>Completing authentication...</p>
       </div>
     </div>
   );

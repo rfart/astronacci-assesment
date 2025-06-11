@@ -1,12 +1,12 @@
 import api from '../utils/api';
-import { MembershipType } from '@astronacci/shared';
+import { MembershipTier } from '@astronacci/shared';
 
 export interface User {
   _id: string;
   name: string;
   email: string;
   avatar?: string;
-  membershipType: MembershipType;
+  membershipType: MembershipTier;
   role: 'user' | 'editor' | 'admin';
   isActive: boolean;
   createdAt: string;
@@ -27,7 +27,7 @@ export const authService = {
   },
 
   // Update membership
-  updateMembership: async (membershipType: MembershipType): Promise<User> => {
+  updateMembership: async (membershipType: MembershipTier): Promise<User> => {
     const response = await api.put('/auth/membership', { membershipType });
     return response.data.data;
   },

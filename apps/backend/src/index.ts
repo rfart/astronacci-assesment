@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 import passport from 'passport';
 
 import { connectDB } from './config/database';
-import './config/passport';
+import { configurePassport } from './config/passport';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import articleRoutes from './routes/articles';
@@ -45,6 +45,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Passport middleware
 app.use(passport.initialize() as any);
+
+// Configure passport strategies
+configurePassport();
 
 // Connect to MongoDB
 connectDB();
