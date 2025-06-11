@@ -1,0 +1,15 @@
+{
+  "name": "@astronacci/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Astronacci Assessment",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["shared", "types", "utilities"],
+  "author": "Astronacci Assessment",
+  "license": "MIT"
+}

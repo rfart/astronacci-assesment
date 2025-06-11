@@ -1,0 +1,38 @@
+{
+  "name": "astronacci-assessment",
+  "version": "1.0.0",
+  "description": "Monorepo for Astronacci Assessment - Content Management System with Membership Tiers",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces",
+    "install:all": "npm install",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.2"
+  },
+  "keywords": [
+    "monorepo",
+    "typescript",
+    "react",
+    "express",
+    "mongodb",
+    "social-auth",
+    "cms"
+  ],
+  "author": "Astronacci Assessment",
+  "license": "MIT"
+}
