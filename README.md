@@ -98,6 +98,7 @@ npm run dev:backend     # Backend on http://localhost:5001
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5001
 - Health Check: http://localhost:5001/health
+- **📚 Interactive API Documentation: http://localhost:5001/api-docs**
 
 4. **Configure OAuth (Optional)**
    - Create Google OAuth credentials
@@ -181,10 +182,25 @@ docker-compose down
 
 ## 🛠️ API Documentation
 
+### Interactive Swagger Documentation
+
+The API includes comprehensive **Swagger/OpenAPI 3.0** documentation with an interactive interface:
+
+**🌐 Live Documentation**: http://localhost:5001/api-docs
+
+#### Features:
+- **Interactive Testing**: Test all API endpoints directly from the browser
+- **Authentication Support**: Built-in JWT token authentication testing
+- **Request/Response Examples**: Complete examples for all endpoints
+- **Schema Validation**: Detailed request/response schema documentation
+- **Error Handling**: Comprehensive error response documentation
+
+#### Quick API Overview:
+
 ### Authentication Endpoints
 ```
-POST   /api/auth/google          # Google OAuth
-POST   /api/auth/facebook        # Facebook OAuth
+GET    /api/auth/google          # Google OAuth
+GET    /api/auth/facebook        # Facebook OAuth
 GET    /api/auth/profile         # Get user profile
 PUT    /api/auth/membership      # Update membership
 POST   /api/auth/logout          # Logout user
@@ -216,6 +232,13 @@ GET    /api/users/:id            # Get user (Admin)
 PUT    /api/users/:id/role       # Update user role (Admin)
 DELETE /api/users/:id            # Delete user (Admin)
 ```
+
+### Testing with Swagger UI
+
+1. **Open Swagger Documentation**: http://localhost:5001/api-docs
+2. **Authenticate**: Click "Authorize" button and enter JWT token
+3. **Test Endpoints**: Click on any endpoint to expand and test
+4. **View Responses**: See real-time responses and status codes
 
 ## 🔧 Development
 
@@ -326,8 +349,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Frontend Documentation](apps/frontend/README.md)
 - [Backend Documentation](apps/backend/README.md)
-- [API Documentation](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
+- [API Documentation](docs/API.md)
+- [**📚 Interactive Swagger Documentation**](docs/SWAGGER.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
 
 ## 🐛 Troubleshooting
 

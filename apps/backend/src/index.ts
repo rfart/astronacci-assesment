@@ -5,8 +5,9 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import passport from 'passport';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 import { connectDB } from './config/database';
 import { configurePassport } from './config/passport';
@@ -23,7 +24,7 @@ import { notFoundHandler } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ?? 5000;
 
 // Rate limiting
 const limiter = rateLimit({
@@ -35,7 +36,7 @@ const limiter = rateLimit({
 app.use(limiter as any);
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   credentials: true
 }));
 app.use(compression() as any);
@@ -52,6 +53,42 @@ configurePassport();
 // Connect to MongoDB
 connectDB();
 
+// Connect to MongoDB
+connectDB();
+
+// Swagger documentation
+const swaggerOptions = {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Social Media Platform API Documentation'
+};
+
+app.use('/api-docs', swaggerUi.serve as any, swaggerUi.setup(swaggerSpec, swaggerOptions) as any);
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Server is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Server is running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -75,5 +112,6 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV ?? 'development'}`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
 });
