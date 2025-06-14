@@ -1,8 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { User as IUser, MembershipTier, UserRole } from '@astronacci/shared';
 
 interface UserDocument extends Omit<IUser, '_id'>, Document {
   role: UserRole;
+  password?: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<UserDocument>({
@@ -17,6 +20,13 @@ const userSchema = new Schema<UserDocument>({
     type: String,
     required: true,
     trim: true
+  },
+  password: {
+    type: String,
+    required: function(this: UserDocument) {
+      return this.socialProvider === 'local';
+    },
+    minlength: 6
   },
   avatar: {
     type: String,
@@ -73,7 +83,28 @@ userSchema.index({ email: 1 });
 userSchema.index({ socialId: 1, socialProvider: 1 });
 userSchema.index({ membershipTier: 1 });
 
+// Pre-save middleware for password hashing
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
+  
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
+});
+
 // Instance methods
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) {
+    return false;
+  }
+  return bcrypt.compare(candidatePassword, this.password);
+};
 userSchema.methods.canAccessContent = function(contentType: 'article' | 'video'): boolean {
   const limits = {
     [MembershipTier.TYPE_A]: { articles: 3, videos: 3 },
