@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { VideoController } from '../controllers/videoController';
-import { authenticateToken, authorizeRole } from '../middleware/auth';
+import { authenticateToken, authorizeRole, optionalAuthenticateToken } from '../middleware/auth';
 
 const router = Router();
 const videoController = new VideoController();
@@ -43,7 +43,7 @@ const videoController = new VideoController();
  *               $ref: '#/components/schemas/PaginatedResponse'
  */
 // Public routes
-router.get('/', videoController.getVideos);
+router.get('/', optionalAuthenticateToken, videoController.getVideos);
 
 /**
  * @swagger

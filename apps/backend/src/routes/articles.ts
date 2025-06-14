@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ArticleController } from '../controllers/articleController';
-import { authenticateToken, authorizeRole } from '../middleware/auth';
+import { authenticateToken, authorizeRole, optionalAuthenticateToken } from '../middleware/auth';
 
 const router = Router();
 const articleController = new ArticleController();
@@ -64,7 +64,7 @@ const articleController = new ArticleController();
  *                       type: boolean
  */
 // Public routes
-router.get('/', articleController.getArticles);
+router.get('/', optionalAuthenticateToken, articleController.getArticles);
 
 /**
  * @swagger

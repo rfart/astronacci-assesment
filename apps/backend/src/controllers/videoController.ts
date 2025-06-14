@@ -7,45 +7,136 @@ interface AuthenticatedRequest extends Request {
 }
 
 export class VideoController {
+  // Helper method to build search query
+  private buildQuery(category?: string, search?: string): any {
+    const query: any = {};
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+    
+    return query;
+  }
+
+  // Helper method to calculate membership limits
+  private calculateMembershipLimits(user: any, totalAvailable: number, page: number, limit: number) {
+    if (!user || user.role === 'admin') {
+      return { effectiveLimit: limit, hasMoreContent: false, membershipMessage: null };
+    }
+
+    const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+    const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+    
+    if (membershipLimit === -1) {
+      return { effectiveLimit: limit, hasMoreContent: false, membershipMessage: null };
+    }
+
+    // For listing, limit the number of videos they can see based on their tier
+    const requestedStart = (page - 1) * limit;
+    
+    // If requesting beyond their membership limit
+    if (requestedStart >= membershipLimit) {
+      return { 
+        effectiveLimit: 0, 
+        hasReachedLimit: true,
+        membershipLimit,
+        used: user.videosWatched,
+        totalAvailable 
+      };
+    }
+    
+    // Calculate how many videos they can see on this page
+    const remainingInLimit = membershipLimit - requestedStart;
+    const effectiveLimit = Math.min(limit, remainingInLimit);
+    
+    const hasMoreContent = totalAvailable > membershipLimit;
+    const membershipMessage = hasMoreContent 
+      ? `You can access ${membershipLimit} videos with ${userMembership} membership. ${totalAvailable - membershipLimit} more videos available with upgrade.`
+      : null;
+    
+    return { effectiveLimit, hasMoreContent, membershipMessage, membershipLimit, used: user.videosWatched };
+  }
+
   // Get all videos with membership filtering
   public getVideos = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
+      const user = req.user;
 
-      // Build query
-      const query: any = {};
+      const query = this.buildQuery(category as string, search as string);
+      const totalAvailable = await Video.countDocuments(query);
       
-      if (category) {
-        query.category = category;
-      }
+      const limitResult = this.calculateMembershipLimits(user, totalAvailable, Number(page), Number(limit));
       
-      if (search) {
-        query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { tags: { $in: [new RegExp(search as string, 'i')] } }
-        ];
+      // Handle case where user has reached limit
+      if ('hasReachedLimit' in limitResult) {
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        res.json({
+          success: true,
+          data: [],
+          pagination: { page: Number(page), limit: Number(limit), total: 0, pages: 0 },
+          membershipLimit: {
+            hasReachedLimit: true,
+            limit: limitResult.membershipLimit,
+            used: limitResult.used,
+            totalAvailable: limitResult.totalAvailable,
+            message: `You have reached your ${limitResult.membershipLimit}-video limit for ${userMembership} membership. Upgrade to access more content.`
+          }
+        });
+        return;
       }
 
       const skip = (Number(page) - 1) * Number(limit);
-
       const videos = await Video.find(query)
         .sort({ publishedAt: -1 })
         .skip(skip)
-        .limit(Number(limit));
+        .limit(limitResult.effectiveLimit);
 
-      const total = await Video.countDocuments(query);
+      // Calculate pagination total
+      let paginationTotal = totalAvailable;
+      if (user && user.role !== 'admin') {
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+        if (membershipLimit !== -1) {
+          paginationTotal = Math.min(totalAvailable, membershipLimit);
+        }
+      }
 
-      res.json({
+      const response: any = {
         success: true,
         data: videos,
         pagination: {
           page: Number(page),
           limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit)),
+          total: paginationTotal,
+          pages: Math.ceil(paginationTotal / Number(limit)),
         },
-      });
+      };
+
+      // Add membership info if needed
+      if (user && user.role !== 'admin' && (limitResult.hasMoreContent || limitResult.membershipMessage)) {
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+        
+        response.membershipLimit = {
+          hasReachedLimit: false,
+          limit: membershipLimit,
+          used: user.videosWatched,
+          totalAvailable,
+          hasMoreContent: limitResult.hasMoreContent,
+          message: limitResult.membershipMessage
+        };
+      }
+
+      res.json(response);
     } catch (error) {
       next(error);
     }

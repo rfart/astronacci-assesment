@@ -83,3 +83,34 @@ export const authorizeRole = (allowedRoles: string[]) => {
     next();
   };
 };
+
+// Optional authentication - doesn't fail if no token is provided
+export const optionalAuthenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      // No token provided, continue without user
+      req.user = undefined;
+      next();
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const user = await User.findById(decoded.userId);
+
+    if (!user || !user.isActive) {
+      // Invalid token, continue without user
+      req.user = undefined;
+      next();
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    // Token verification failed, continue without user
+    req.user = undefined;
+    next();
+  }
+};

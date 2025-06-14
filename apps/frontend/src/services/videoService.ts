@@ -7,7 +7,7 @@ export interface Video {
   videoUrl: string;
   thumbnail?: string;
   duration: number;
-  author: {
+  author?: {
     _id: string;
     name: string;
     email: string;
@@ -16,7 +16,7 @@ export interface Video {
     _id: string;
     name: string;
   };
-  tags: string[];
+  tags?: string[];
   isPublished: boolean;
   views: any[];
   createdAt: string;
@@ -31,6 +31,14 @@ export interface VideosResponse {
     limit: number;
     total: number;
     pages: number;
+  };
+  membershipLimit?: {
+    hasReachedLimit: boolean;
+    limit: number;
+    used: number;
+    totalAvailable: number;
+    hasMoreContent?: boolean;
+    message: string;
   };
   message?: string;
 }

@@ -28,6 +28,14 @@ export interface ArticlesResponse {
     total: number;
     pages: number;
   };
+  membershipLimit?: {
+    hasReachedLimit: boolean;
+    limit: number;
+    used: number;
+    totalAvailable: number;
+    hasMoreContent?: boolean;
+    message: string;
+  };
   message?: string;
 }
 

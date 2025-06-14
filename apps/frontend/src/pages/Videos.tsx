@@ -10,6 +10,7 @@ const Videos: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [membershipLimit, setMembershipLimit] = useState<any>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -31,6 +32,7 @@ const Videos: React.FC = () => {
       });
       setVideos(response.data);
       setTotalPages(response.pagination.pages);
+      setMembershipLimit(response.membershipLimit || null);
     } catch (error) {
       console.error('Failed to fetch videos:', error);
     } finally {
@@ -92,8 +94,70 @@ const Videos: React.FC = () => {
         </div>
       )}
 
-      {/* Videos Grid */}
-      {!loading && videos.length === 0 && (
+      {/* Membership Limit Warning */}
+      {!loading && membershipLimit && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          membershipLimit.hasReachedLimit 
+            ? 'bg-red-50 border border-red-200' 
+            : 'bg-yellow-50 border border-yellow-200'
+        }`}>
+          <div className="flex">
+            <div className="flex-shrink-0">
+              {membershipLimit.hasReachedLimit ? (
+                <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+            <div className="ml-3">
+              <h3 className={`text-sm font-medium ${
+                membershipLimit.hasReachedLimit ? 'text-red-800' : 'text-yellow-800'
+              }`}>
+                {membershipLimit.hasReachedLimit ? 'Content Limit Reached' : 'Limited Access'}
+              </h3>
+              <div className={`mt-2 text-sm ${
+                membershipLimit.hasReachedLimit ? 'text-red-700' : 'text-yellow-700'
+              }`}>
+                <p>{membershipLimit.message}</p>
+                {!membershipLimit.hasReachedLimit && (
+                  <div className="mt-2">
+                    <div className={`w-full bg-gray-200 rounded-full h-2`}>
+                      <div 
+                        className={`h-2 rounded-full ${
+                          membershipLimit.used >= membershipLimit.limit ? 'bg-red-500' : 'bg-yellow-500'
+                        }`}
+                        style={{ width: `${Math.min((membershipLimit.used / membershipLimit.limit) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs mt-1">
+                      {membershipLimit.used}/{membershipLimit.limit} videos accessed
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3">
+                <button
+                  onClick={() => window.location.href = '/profile'}
+                  className={`text-sm font-medium ${
+                    membershipLimit.hasReachedLimit 
+                      ? 'text-red-700 hover:text-red-600' 
+                      : 'text-yellow-700 hover:text-yellow-600'
+                  } underline`}
+                >
+                  Upgrade Membership →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No results */}
+      {!loading && videos.length === 0 && !membershipLimit?.hasReachedLimit && (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -101,6 +165,19 @@ const Videos: React.FC = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">No videos found</h3>
           <p className="mt-1 text-sm text-gray-500">
             {search ? 'Try adjusting your search terms.' : 'No videos have been published yet.'}
+          </p>
+        </div>
+      )}
+
+      {/* Membership Limit Reached - Show Empty State */}
+      {!loading && videos.length === 0 && membershipLimit?.hasReachedLimit && (
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Content Access Restricted</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            You've reached your video limit. Upgrade your membership to access more content.
           </p>
         </div>
       )}
@@ -150,11 +227,11 @@ const Videos: React.FC = () => {
                 {video.description}
               </p>
               <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                <span>{video.author.name}</span>
+                <span>{video.author?.name ?? 'Unknown Author'}</span>
                 <span>{new Date(video.createdAt).toLocaleDateString()}</span>
               </div>
               {/* Tags */}
-              {video.tags.length > 0 && (
+              {video.tags && video.tags.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {video.tags.slice(0, 2).map((tag) => (
                     <span
