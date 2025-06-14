@@ -54,21 +54,18 @@ export class VideoController {
 
       // Add membership status info for frontend display
       if (user && user.role !== 'admin') {
-        // Reset daily limits if it's a new day
-        user.checkAndResetDailyLimit();
-        await user.save();
-        
         const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
         const dailyLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+        const todayUsage = user.getTodayAccess('video');
         
         response.membershipStatus = {
           tier: userMembership,
           dailyLimit: dailyLimit === -1 ? 'unlimited' : dailyLimit,
-          dailyUsed: user.dailyVideosAccessed,
-          dailyRemaining: dailyLimit === -1 ? 'unlimited' : Math.max(0, dailyLimit - user.dailyVideosAccessed),
+          dailyUsed: todayUsage,
+          dailyRemaining: dailyLimit === -1 ? 'unlimited' : Math.max(0, dailyLimit - todayUsage),
           message: dailyLimit === -1 
             ? 'Unlimited video access' 
-            : `${user.dailyVideosAccessed}/${dailyLimit} daily videos accessed`
+            : `${todayUsage}/${dailyLimit} daily videos accessed`
         };
       }
 

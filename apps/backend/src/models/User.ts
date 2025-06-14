@@ -17,8 +17,14 @@ interface UserDocument extends Document {
   dailyVideosAccessed: number;
   lastAccessDate: Date;
   accessedContentToday: {
-    articles: string[];
-    videos: string[];
+    articles: Array<{
+      contentId: string;
+      accessDate: Date;
+    }>;
+    videos: Array<{
+      contentId: string;
+      accessDate: Date;
+    }>;
   };
   isActive: boolean;
   createdAt: Date;
@@ -102,10 +108,12 @@ const userSchema = new Schema<UserDocument>({
   },
   accessedContentToday: {
     articles: [{
-      type: String
+      contentId: { type: String },
+      accessDate: { type: Date }
     }],
     videos: [{
-      type: String
+      contentId: { type: String },
+      accessDate: { type: Date }
     }]
   },
   isActive: {
@@ -176,24 +184,57 @@ userSchema.methods.incrementUsage = async function(contentType: 'article' | 'vid
 };
 
 userSchema.methods.checkAndResetDailyLimit = function(): void {
-  const now = new Date();
+  const today = new Date();
   const lastAccess = new Date(this.lastAccessDate);
   
-  // Check if it's a new day (reset at midnight)
-  const isNewDay = now.toDateString() !== lastAccess.toDateString();
-  
-  if (isNewDay) {
-    this.dailyArticlesAccessed = 0;
-    this.dailyVideosAccessed = 0;
-    this.accessedContentToday = { articles: [], videos: [] };
-    this.lastAccessDate = now;
+  // If it's a new day, update lastAccessDate (this triggers the reset logic)
+  if (today.toDateString() !== lastAccess.toDateString()) {
+    this.lastAccessDate = today;
   }
 };
 
-userSchema.methods.canAccessContentDetail = function(contentType: 'article' | 'video', contentId: string): { canAccess: boolean, reason?: string } {
-  // Reset daily limits if it's a new day
-  this.checkAndResetDailyLimit();
+userSchema.methods.getTodayAccess = function(contentType: 'article' | 'video'): number {
+  const today = new Date();
+  const todayStr = today.toDateString();
+  const lastAccessStr = new Date(this.lastAccessDate).toDateString();
   
+  // If last access was not today, return 0 (fresh start)
+  if (todayStr !== lastAccessStr) {
+    return 0;
+  }
+  
+  // Count content accessed today
+  const accessList = contentType === 'article' 
+    ? this.accessedContentToday.articles 
+    : this.accessedContentToday.videos;
+  
+  return accessList.filter((access: any) => {
+    const accessDate = new Date(access.accessDate);
+    return accessDate.toDateString() === todayStr;
+  }).length;
+};
+
+userSchema.methods.hasAccessedToday = function(contentType: 'article' | 'video', contentId: string): boolean {
+  const today = new Date();
+  const todayStr = today.toDateString();
+  const lastAccessStr = new Date(this.lastAccessDate).toDateString();
+  
+  // If last access was not today, user hasn't accessed anything today
+  if (todayStr !== lastAccessStr) {
+    return false;
+  }
+  
+  const accessList = contentType === 'article' 
+    ? this.accessedContentToday.articles 
+    : this.accessedContentToday.videos;
+  
+  return accessList.some((access: any) => {
+    const accessDate = new Date(access.accessDate);
+    return access.contentId === contentId && accessDate.toDateString() === todayStr;
+  });
+};
+
+userSchema.methods.canAccessContentDetail = function(contentType: 'article' | 'video', contentId: string): { canAccess: boolean, reason?: string } {
   const limits = {
     [MembershipTier.TYPE_A]: { articles: 3, videos: 3 },
     [MembershipTier.TYPE_B]: { articles: 10, videos: 10 },
@@ -203,33 +244,32 @@ userSchema.methods.canAccessContentDetail = function(contentType: 'article' | 'v
   const limit = limits[this.membershipTier as MembershipTier];
   
   // Check if user has already accessed this content today (free re-access)
-  const accessedToday = contentType === 'article' 
-    ? this.accessedContentToday.articles.includes(contentId)
-    : this.accessedContentToday.videos.includes(contentId);
-  
-  if (accessedToday) {
+  if (this.hasAccessedToday(contentType, contentId)) {
     return { canAccess: true };
   }
+  
+  // Get today's usage count
+  const todayUsage = this.getTodayAccess(contentType);
   
   // Check daily limit
   if (contentType === 'article') {
     if (limit.articles === -1) {
       return { canAccess: true };
     }
-    if (this.dailyArticlesAccessed >= limit.articles) {
+    if (todayUsage >= limit.articles) {
       return { 
         canAccess: false, 
-        reason: `Daily article limit reached (${limit.articles}/${limit.articles}). Try again tomorrow or upgrade your membership.`
+        reason: `Daily article limit reached (${todayUsage}/${limit.articles}). Try again tomorrow or upgrade your membership.`
       };
     }
   } else {
     if (limit.videos === -1) {
       return { canAccess: true };
     }
-    if (this.dailyVideosAccessed >= limit.videos) {
+    if (todayUsage >= limit.videos) {
       return { 
         canAccess: false, 
-        reason: `Daily video limit reached (${limit.videos}/${limit.videos}). Try again tomorrow or upgrade your membership.`
+        reason: `Daily video limit reached (${todayUsage}/${limit.videos}). Try again tomorrow or upgrade your membership.`
       };
     }
   }
@@ -238,28 +278,32 @@ userSchema.methods.canAccessContentDetail = function(contentType: 'article' | 'v
 };
 
 userSchema.methods.recordContentAccess = async function(contentType: 'article' | 'video', contentId: string): Promise<void> {
-  // Reset daily limits if it's a new day
-  this.checkAndResetDailyLimit();
-  
   // Check if already accessed today
-  const accessedToday = contentType === 'article' 
-    ? this.accessedContentToday.articles.includes(contentId)
-    : this.accessedContentToday.videos.includes(contentId);
-  
-  if (!accessedToday) {
-    // Add to accessed content list
-    if (contentType === 'article') {
-      this.accessedContentToday.articles.push(contentId);
-      this.dailyArticlesAccessed += 1;
-      this.articlesRead += 1; // Keep total count for backward compatibility
-    } else {
-      this.accessedContentToday.videos.push(contentId);
-      this.dailyVideosAccessed += 1;
-      this.videosWatched += 1; // Keep total count for backward compatibility
-    }
-    
-    await this.save();
+  if (this.hasAccessedToday(contentType, contentId)) {
+    return; // Don't record duplicate access for the same day
   }
+  
+  const now = new Date();
+  
+  // Add to accessed content list with timestamp
+  if (contentType === 'article') {
+    this.accessedContentToday.articles.push({
+      contentId: contentId,
+      accessDate: now
+    });
+    this.articlesRead += 1; // Keep total count for backward compatibility
+  } else {
+    this.accessedContentToday.videos.push({
+      contentId: contentId,
+      accessDate: now
+    });
+    this.videosWatched += 1; // Keep total count for backward compatibility
+  }
+  
+  // Update last access date
+  this.lastAccessDate = now;
+  
+  await this.save();
 };
 
 export const User = mongoose.model<UserDocument>('User', userSchema);

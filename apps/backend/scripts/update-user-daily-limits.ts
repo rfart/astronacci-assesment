@@ -17,7 +17,10 @@ async function updateUserDailyLimits() {
           { dailyArticlesAccessed: { $exists: false } },
           { dailyVideosAccessed: { $exists: false } },
           { lastAccessDate: { $exists: false } },
-          { accessedContentToday: { $exists: false } }
+          { accessedContentToday: { $exists: false } },
+          // Update users with old array format to new object format
+          { 'accessedContentToday.articles.0': { $type: 'string' } },
+          { 'accessedContentToday.videos.0': { $type: 'string' } }
         ]
       },
       {

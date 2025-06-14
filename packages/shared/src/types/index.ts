@@ -41,8 +41,14 @@ export interface User {
   dailyVideosAccessed: number;
   lastAccessDate: Date;
   accessedContentToday: {
-    articles: string[];
-    videos: string[];
+    articles: Array<{
+      contentId: string;
+      accessDate: Date;
+    }>;
+    videos: Array<{
+      contentId: string;
+      accessDate: Date;
+    }>;
   };
   isActive: boolean;
   createdAt: Date;

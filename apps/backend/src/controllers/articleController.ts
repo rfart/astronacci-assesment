@@ -54,21 +54,18 @@ export class ArticleController {
 
       // Add membership status info for frontend display
       if (user && user.role !== 'admin') {
-        // Reset daily limits if it's a new day
-        user.checkAndResetDailyLimit();
-        await user.save();
-        
         const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
         const dailyLimit = MEMBERSHIP_LIMITS[userMembership].articles;
+        const todayUsage = user.getTodayAccess('article');
         
         response.membershipStatus = {
           tier: userMembership,
           dailyLimit: dailyLimit === -1 ? 'unlimited' : dailyLimit,
-          dailyUsed: user.dailyArticlesAccessed,
-          dailyRemaining: dailyLimit === -1 ? 'unlimited' : Math.max(0, dailyLimit - user.dailyArticlesAccessed),
+          dailyUsed: todayUsage,
+          dailyRemaining: dailyLimit === -1 ? 'unlimited' : Math.max(0, dailyLimit - todayUsage),
           message: dailyLimit === -1 
             ? 'Unlimited article access' 
-            : `${user.dailyArticlesAccessed}/${dailyLimit} daily articles accessed`
+            : `${todayUsage}/${dailyLimit} daily articles accessed`
         };
       }
 
