@@ -7,17 +7,195 @@
 
 ## 📖 Table of Contents
 
-1. [Platform Overview](#platform-overview)
-2. [Daily Content Access System](#daily-content-access-system)
-3. [User Types & Roles](#user-types--roles)
-4. [Guest User Journey](#guest-user-journey)
-5. [Regular User Journey](#regular-user-journey)
-6. [Daily Content Consumption Flow](#daily-content-consumption-flow)
-7. [Editor Journey](#editor-journey)
-8. [Admin Journey](#admin-journey)
-9. [Technical Integration](#technical-integration)
-10. [API Documentation](#api-documentation)
-11. [Troubleshooting](#troubleshooting)
+1. [Quick Setup Guide](#quick-setup-guide)
+2. [Test Data & Credentials](#test-data--credentials)
+3. [Platform Overview](#platform-overview)
+4. [Daily Content Access System](#daily-content-access-system)
+5. [User Types & Roles](#user-types--roles)
+6. [Guest User Journey](#guest-user-journey)
+7. [Regular User Journey](#regular-user-journey)
+8. [Daily Content Consumption Flow](#daily-content-consumption-flow)
+9. [Editor Journey](#editor-journey)
+10. [Admin Journey](#admin-journey)
+11. [Testing Scenarios](#testing-scenarios)
+12. [Technical Integration](#technical-integration)
+13. [API Documentation](#api-documentation)
+14. [Troubleshooting](#troubleshooting)
+
+---
+
+## 🚀 Quick Setup Guide
+
+### **Prerequisites Setup**
+Before testing the platform, ensure you have:
+
+1. **Node.js 18+** installed
+2. **Docker & Docker Compose** installed
+3. **Git** installed
+4. **Available ports:** 3000, 5001, 27017, 6379
+
+### **Complete Setup Process**
+
+#### **1. Initial Installation**
+```bash
+# Clone repository
+git clone <repository-url>
+cd astronacci-assesment
+
+# Install all dependencies
+npm install
+```
+
+#### **2. Environment Configuration**
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Verify .env contains:
+# NODE_ENV=development
+# MONGODB_URI=mongodb://admin:password@localhost:27017/social-media-platform?authSource=admin
+# JWT_SECRET=your-super-secret-jwt-key-here-please-change-in-production
+```
+
+#### **3. Start Database Services**
+```bash
+# Start MongoDB and Redis containers
+docker compose up -d mongodb redis
+
+# Verify containers are running
+docker compose ps
+```
+
+#### **4. Populate Test Data** ⭐
+```bash
+# Populate database with comprehensive test data
+npm run populate:test-data
+
+# This script creates:
+# ✅ 4 test users with different roles and membership tiers
+# ✅ 5 diverse articles with rich content
+# ✅ 5 educational videos with metadata
+# ✅ Realistic timestamps and relationships
+```
+
+#### **5. Start Application Services**
+```bash
+# Start both frontend and backend
+npm run dev
+
+# Or start individually:
+npm run dev:backend     # Backend API on port 5001
+npm run dev:frontend    # React app on port 3000
+```
+
+#### **6. Verify Setup**
+Open these URLs to confirm everything is working:
+
+- **✅ Frontend App:** http://localhost:3000
+- **✅ Backend API:** http://localhost:5001/health
+- **✅ API Documentation:** http://localhost:5001/api-docs
+- **✅ Login Page:** http://localhost:3000/login
+
+---
+
+## 🔐 Test Data & Credentials
+
+After running `npm run populate:test-data`, use these test accounts:
+
+### **Test User Accounts**
+
+| **Role** | **Email** | **Password** | **Membership** | **Daily Limits** | **Purpose** |
+|----------|-----------|--------------|----------------|------------------|-------------|
+| **👤 Admin** | admin@test.com | admin123 | TYPE_C | Unlimited | Full platform management |
+| **👤 User** | user@test.com | user123 | TYPE_A | 3 articles, 3 videos | Basic daily limits testing |
+| **👤 Editor** | editor@test.com | editor123 | TYPE_B | 10 articles, 10 videos | Content creation testing |
+| **👤 Premium** | premium@test.com | premium123 | TYPE_C | Unlimited | Premium features testing |
+
+### **Sample Content Created**
+
+#### **📚 Test Articles** (5 total)
+1. **"Getting Started with React TypeScript"** - Frontend development tutorial
+2. **"Node.js Best Practices for 2025"** - Backend development guide  
+3. **"MongoDB Schema Design Patterns"** - Database design article
+4. **"Modern CSS Grid and Flexbox Techniques"** - CSS layout guide
+5. **"API Security: Complete Guide to JWT Authentication"** - Security tutorial
+
+#### **🎥 Test Videos** (5 total)
+1. **"React Hooks Deep Dive"** - 30 min React tutorial
+2. **"Building REST APIs with Express"** - 40 min API development
+3. **"MongoDB Aggregation Pipeline Masterclass"** - 60 min database tutorial
+4. **"CSS Grid Layout: From Basics to Advanced"** - 45 min CSS course
+5. **"Docker for Developers"** - 70 min containerization guide
+
+---
+
+## 🧪 Testing Scenarios
+
+### **Scenario 1: Basic User Daily Limits**
+```bash
+# Login as basic user
+Email: user@test.com
+Password: user123
+Membership: TYPE_A (3 articles, 3 videos daily)
+
+# Test Flow:
+1. Browse articles page → See all 5 articles
+2. Click on 3 different articles → Should work fine
+3. Try accessing 4th article → Should show limit reached
+4. Go back to previously accessed article → Should work (free re-access)
+5. Check usage indicator → Should show 3/3 articles used
+```
+
+### **Scenario 2: Premium User Experience**
+```bash
+# Login as premium user  
+Email: premium@test.com
+Password: premium123
+Membership: TYPE_C (Unlimited)
+
+# Test Flow:
+1. Access any number of articles → No limits
+2. Access any number of videos → No limits
+3. Check usage indicator → Shows unlimited status
+```
+
+### **Scenario 3: Content Management (Editor)**
+```bash
+# Login as editor
+Email: editor@test.com
+Password: editor123
+Membership: TYPE_B (10 daily articles, 10 videos)
+
+# Test Flow:
+1. Access CMS dashboard → Available navigation
+2. Create new article → Should save successfully
+3. Edit existing content → Should update properly
+4. Verify content appears in listings → Visible to all users
+```
+
+### **Scenario 4: Platform Administration (Admin)**
+```bash
+# Login as admin
+Email: admin@test.com
+Password: admin123
+Membership: TYPE_C (Unlimited access)
+
+# Test Flow:
+1. Access admin dashboard → Full platform overview
+2. Manage all users → View and modify user accounts
+3. Content moderation → Edit any content
+4. System monitoring → Usage statistics and health
+```
+
+### **Scenario 5: Daily Reset Simulation**
+```bash
+# Test daily reset behavior:
+1. Login as user@test.com
+2. Access 3 articles (reach daily limit)
+3. Try accessing 4th article → Blocked
+4. Simulate next day (modify database dates)
+5. Access articles again → Fresh 3/3 daily limit
+```
 
 ---
 
@@ -726,6 +904,178 @@ graph TD
 - [ ] Multi-language support and internationalization
 - [ ] Progressive Web App (PWA) capabilities
 - [ ] Real-time notifications and websockets
+
+---
+
+## 🚨 Setup Troubleshooting Guide
+
+### **Common Setup Issues & Solutions**
+
+#### **1. MongoDB Connection Issues**
+```bash
+# Problem: "Command find requires authentication" or "Connection refused"
+
+# Solution 1: Verify MongoDB container
+docker compose ps
+docker compose logs mongodb
+
+# Solution 2: Restart MongoDB service
+docker compose down mongodb
+docker compose up -d mongodb
+
+# Solution 3: Check MongoDB authentication
+docker exec -it social-media-mongodb mongosh -u admin -p password --authenticationDatabase admin
+```
+
+#### **2. Test Data Population Fails**
+```bash
+# Problem: populate:test-data script fails
+
+# Solution 1: Verify NODE_ENV
+echo $NODE_ENV  # Should be 'development'
+
+# Solution 2: Check environment file
+cat .env | grep NODE_ENV
+cat .env | grep MONGODB_URI
+
+# Solution 3: Force development environment
+NODE_ENV=development npm run populate:test-data
+```
+
+#### **3. Port Conflicts**
+```bash
+# Problem: "Port already in use" errors
+
+# Solution: Check what's using the ports
+lsof -i :3000  # Frontend port
+lsof -i :5001  # Backend port
+lsof -i :27017 # MongoDB port
+lsof -i :6379  # Redis port
+
+# Kill processes if needed
+kill -9 <PID>
+```
+
+#### **4. Docker Issues**
+```bash
+# Problem: Docker containers won't start
+
+# Solution 1: Clean Docker state
+docker compose down
+docker system prune -f
+docker compose up -d mongodb redis
+
+# Solution 2: Check Docker resources
+docker stats
+docker system df
+
+# Solution 3: Restart Docker Desktop (if on Mac/Windows)
+```
+
+#### **5. Frontend Build Issues**
+```bash
+# Problem: React app won't start or build
+
+# Solution 1: Clear node_modules
+rm -rf node_modules apps/frontend/node_modules
+npm install
+
+# Solution 2: Clear cache
+npm cache clean --force
+rm -rf apps/frontend/build
+
+# Solution 3: Check TypeScript compilation
+npm run type-check
+```
+
+#### **6. Backend API Issues**
+```bash
+# Problem: Backend server won't start
+
+# Solution 1: Check environment variables
+cat .env
+npm run dev:backend
+
+# Solution 2: Verify database connection
+curl http://localhost:5001/health
+
+# Solution 3: Check logs for specific errors
+npm run dev:backend 2>&1 | grep -i error
+```
+
+### **Testing Verification Checklist**
+
+#### **✅ Before Testing - Verify These URLs Work:**
+- [ ] **Frontend:** http://localhost:3000 → Shows login/homepage
+- [ ] **Backend Health:** http://localhost:5001/health → Returns OK status
+- [ ] **API Docs:** http://localhost:5001/api-docs → Shows Swagger UI
+- [ ] **MongoDB:** `docker exec -it social-media-mongodb mongosh` → Can connect
+
+#### **✅ Test Data Verification:**
+```bash
+# Verify test data was created successfully
+curl -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@test.com","password":"user123"}'
+
+# Should return JWT token and user info
+```
+
+#### **✅ Daily Limits Testing Checklist:**
+- [ ] Login with `user@test.com` (TYPE_A user)
+- [ ] Browse articles page → See all 5 articles
+- [ ] Access 3 articles → Should work normally
+- [ ] Try 4th article → Should show limit reached message
+- [ ] Revisit previous article → Should work (free re-access)
+- [ ] Check usage counter → Shows 3/3 used
+
+### **Performance Optimization**
+
+#### **If Application Runs Slowly:**
+```bash
+# Increase Node.js memory (if needed)
+export NODE_OPTIONS="--max-old-space-size=4096"
+
+# Monitor resource usage
+docker stats
+top -p $(pgrep node)
+
+# Check database performance
+docker exec social-media-mongodb mongosh --eval "db.stats()"
+```
+
+#### **Quick Reset Commands**
+```bash
+# Complete environment reset
+docker compose down
+docker system prune -f
+rm -rf node_modules apps/*/node_modules packages/*/node_modules
+npm install
+docker compose up -d mongodb redis
+npm run populate:test-data
+npm run dev
+```
+
+### **Getting Help**
+
+#### **Log Collection for Debugging**
+```bash
+# Collect comprehensive logs
+mkdir debug-logs
+docker compose logs > debug-logs/docker.log
+npm run dev:backend > debug-logs/backend.log 2>&1 &
+npm run dev:frontend > debug-logs/frontend.log 2>&1 &
+```
+
+#### **System Information**
+```bash
+# Gather system info for troubleshooting
+echo "Node.js: $(node --version)"
+echo "npm: $(npm --version)"
+echo "Docker: $(docker --version)"
+echo "OS: $(uname -a)"
+docker compose version
+```
 
 ---
 

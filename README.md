@@ -51,89 +51,183 @@ astronacci-assesment/
 - **Shared types** and utilities
 - **ESLint** for code quality
 
-## 🚀 Quick Start
+## 🚀 Complete Setup Guide
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- MongoDB (local or cloud)
-- Docker (optional)
+- **Node.js 18+** (Required)
+- **npm** or **yarn** (Required)
+- **Docker & Docker Compose** (Required for MongoDB)
+- **Git** (Required)
 
-### Installation
+### Step-by-Step Installation
 
-1. **Clone the repository**
+#### 1. **Clone & Install Dependencies**
 ```bash
+# Clone the repository
 git clone <repository-url>
 cd astronacci-assesment
-```
 
-2. **Install dependencies**
-```bash
+# Install all dependencies (frontend, backend, shared)
 npm install
 ```
 
-3. **Environment Setup**
+#### 2. **Environment Configuration**
 ```bash
-# Backend environment
-cp apps/backend/.env.example apps/backend/.env
+# Copy and configure environment variables
+cp .env.example .env
 
-# Frontend environment (create manually)
-echo "REACT_APP_API_URL=http://localhost:5001/api" > apps/frontend/.env
+# Edit .env file with your settings:
+# - NODE_ENV=development
+# - MONGODB_URI=mongodb://admin:password@localhost:27017/social-media-platform?authSource=admin
+# - JWT_SECRET=your-secret-key
+# - GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET (optional)
+# - FACEBOOK_APP_ID & FACEBOOK_APP_SECRET (optional)
 ```
 
-4. **Start Database Services**
+#### 3. **Start Database Services**
 ```bash
-# Start MongoDB and Redis with Docker
+# Start MongoDB and Redis containers
 docker compose up -d mongodb redis
+
+# Verify containers are running
+docker compose ps
 ```
 
-5. **Start Development Servers**
+#### 4. **Populate Test Data** 🎯
 ```bash
-# Start both frontend and backend
+# Populate database with test users, articles, and videos
+npm run populate:test-data
+
+# This creates:
+# - 4 test users (admin, user, editor, premium)
+# - 5 sample articles with rich content
+# - 5 sample videos with metadata
+```
+
+#### 5. **Start Development Servers**
+```bash
+# Option A: Start everything at once
 npm run dev
 
-# Or start individually
-npm run dev:frontend    # Frontend on http://localhost:3000
+# Option B: Start individually
 npm run dev:backend     # Backend on http://localhost:5001
+npm run dev:frontend    # Frontend on http://localhost:3000
+
+# Option C: Start shared package watcher (for development)
+npm run dev:shared      # Watches shared types
 ```
 
-**🚀 Your application will be available at:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5001
-- Health Check: http://localhost:5001/health
-- **📚 Interactive API Documentation: http://localhost:5001/api-docs**
+### 🌐 **Application URLs**
+After successful setup, access your application at:
 
-4. **Configure OAuth (Optional)**
-   - Create Google OAuth credentials
-   - Create Facebook App credentials
-   - Update environment variables
+- **Frontend Application**: http://localhost:3000
+- **Backend API**: http://localhost:5001/api
+- **API Documentation**: http://localhost:5001/api-docs *(Interactive Swagger UI)*
+- **Health Check**: http://localhost:5001/health
 
-5. **Start development servers**
+### 🔐 **Test User Credentials**
+After running `npm run populate:test-data`, use these accounts:
+
+| Role | Email | Password | Membership | Daily Limits |
+|------|-------|----------|------------|--------------|
+| **Admin** | admin@test.com | admin123 | TYPE_C | Unlimited |
+| **User** | user@test.com | user123 | TYPE_A | 3 articles, 3 videos |
+| **Editor** | editor@test.com | editor123 | TYPE_B | 10 articles, 10 videos |
+| **Premium** | premium@test.com | premium123 | TYPE_C | Unlimited |
+
+### 🧪 **Testing the Daily Limits System**
+
+1. **Login** with `user@test.com` (TYPE_A - 3 daily articles, 3 videos)
+2. **Browse Content** - Notice you can see ALL articles and videos in listings
+3. **Access Articles** - Click on article details (counts against daily limit)
+4. **Track Usage** - Watch the usage counter update in real-time
+5. **Re-access Content** - Revisit previously accessed content (FREE!)
+6. **Reach Limits** - Try accessing more content after reaching daily limits
+7. **Test Different Users** - Login with different membership tiers
+
+### 🐋 **Docker Alternative Setup**
+If you prefer running everything in containers:
+
 ```bash
-# Start all services
-npm run dev
+# Start all services including frontend and backend
+docker compose up -d
 
-# Or start individually
-npm run dev:frontend    # Frontend only
-npm run dev:backend     # Backend only
-npm run dev:shared      # Shared package
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
 ```
 
-### Using Docker
+### 🔧 **Development Tools**
 
-1. **Start with Docker Compose**
+#### Available Scripts
 ```bash
-docker-compose up -d
+# Development
+npm run dev                 # Start all services
+npm run dev:frontend       # Frontend only
+npm run dev:backend        # Backend only
+npm run dev:shared         # Shared package watcher
+
+# Database
+npm run populate:test-data  # Populate test data (development only)
+
+# Building
+npm run build              # Build all packages
+npm run build:frontend     # Build frontend only
+npm run build:backend      # Build backend only
+
+# Type Checking
+npm run type-check         # Check types across all packages
 ```
 
-2. **View logs**
+#### Database Management
 ```bash
-docker-compose logs -f
+# MongoDB Shell (if using Docker)
+docker exec -it social-media-mongodb mongosh -u admin -p password
+
+# View database
+use social-media-platform
+show collections
+db.users.find().pretty()
 ```
 
-3. **Stop services**
+### ⚠️ **Important Notes**
+
+1. **Environment Safety**: The `populate:test-data` script only runs in `NODE_ENV=development`
+2. **Database Authentication**: MongoDB requires authentication (configured in docker-compose.yml)
+3. **Port Conflicts**: Ensure ports 3000, 5001, 27017, and 6379 are available
+4. **Memory Requirements**: Docker services require ~512MB RAM minimum
+
+### 🚨 **Troubleshooting**
+
+#### Common Issues and Solutions
+
+**MongoDB Connection Error**
 ```bash
-docker-compose down
+# Ensure MongoDB container is running
+docker compose up -d mongodb
+docker compose logs mongodb
+```
+
+**Test Data Population Fails**
+```bash
+# Check NODE_ENV is set to development
+echo $NODE_ENV
+
+# Verify MongoDB authentication
+docker exec -it social-media-mongodb mongosh -u admin -p password
+```
+
+**Frontend/Backend Won't Start**
+```bash
+# Check if ports are in use
+lsof -i :3000  # Frontend port
+lsof -i :5001  # Backend port
+
+# Clear node_modules if needed
+rm -rf node_modules apps/*/node_modules packages/*/node_modules
+npm install
 ```
 
 ## 👥 Daily Content Access System
@@ -372,507 +466,23 @@ membershipStatus: {
 - **Re-Access Indicators**: Visual cues for free re-access content
 - **Membership Cards**: Clear tier benefits and upgrade paths
 
-## 🔄 Migration & Compatibility
-
-### **No Migration Required!**
-
-The new date-based tracking system is **backward compatible** and requires **no manual migration**:
-
-#### **✅ Automatic Compatibility**
-- **Existing Users**: Automatically start with fresh daily limits on first access
-- **Legacy Fields**: Maintained for compatibility (`dailyArticlesAccessed`, `dailyVideosAccessed`)
-- **Seamless Transition**: Old data structures work alongside new date-based tracking
-- **Zero Downtime**: No database updates or user intervention needed
-
-#### **🔄 How It Works**
-1. **Existing User First Access**: System detects missing date-based data
-2. **Auto-Initialization**: Creates new access tracking structure on-the-fly
-3. **Date Comparison**: Automatically treats as fresh day if `lastAccessDate` differs
-4. **Progressive Enhancement**: Users naturally migrate to new system through usage
-
-#### **📊 Data Evolution Example**
-```typescript
-// Before (Legacy User)
-{
-  dailyArticlesAccessed: 2,          // May be stale
-  lastAccessDate: "2025-06-13",     // Yesterday
-  accessedContentToday: { articles: [], videos: [] }  // Empty
-}
-
-// After First Access Today (Auto-Updated)
-{
-  dailyArticlesAccessed: 2,          // Preserved
-  lastAccessDate: "2025-06-14",     // Updated to today
-  accessedContentToday: {
-    articles: [{
-      contentId: "new_article_id",
-      accessDate: "2025-06-14T10:30:00Z"
-    }],
-    videos: []
-  }
-}
-```
-
-### **🎯 Benefits of New Approach**
-- **🚀 Zero Maintenance**: No scheduled jobs or background processes
-- **⚡ Real-Time Accuracy**: Always current regardless of server restarts
-- **🌍 Timezone Independent**: Works correctly across different timezones
-- **📈 Scalable**: Performance improves with user activity patterns
-- **🔍 Analytics Ready**: Rich timestamp data for future insights
-dailyVideosAccessed: 0          // Daily video counter
-lastAccessDate: new Date()      // For daily reset tracking
-accessedContentToday: {
-  articles: [],                 // Today's accessed article IDs
-  videos: []                    // Today's accessed video IDs
-}
-```
-
-### **For Fresh Installations**
-
-Fresh installations automatically include the daily limits system:
-
-```bash
-# Clone and setup
-git clone <repository-url>
-cd astronacci-assesment
-npm install
-
-# Start with daily limits system
-npm run dev
-```
-
-**No migration needed** - all users created after this update will automatically have daily limit tracking.
-
-### API Changes
-
-#### **Response Structure Updates**
-```typescript
-// New membership status in listing responses
-{
-  "membershipStatus": {
-    "tier": "TYPE_A",
-    "dailyLimit": 3,
-    "dailyUsed": 1,
-    "dailyRemaining": 2,
-    "message": "1/3 daily articles accessed"
-  }
-}
-```
-
-#### **Error Handling**
-```typescript
-// New error code for daily limits
-{
-  "success": false,
-  "message": "Daily article limit reached (3/3). Try again tomorrow or upgrade your membership.",
-  "code": "DAILY_LIMIT_REACHED"
-}
-```
-
-### Benefits of New System
-
-#### **For Users**
-- 🎯 **Better Content Discovery**: See everything available
-- 🔄 **Flexible Access**: Re-read/rewatch without penalties
-- 📅 **Daily Fresh Start**: New opportunities every day
-- 📊 **Clear Usage Tracking**: Know exactly where you stand
-
-#### **For Platform**
-- 📈 **Increased Engagement**: Daily return visits encouraged
-- 💰 **Better Monetization**: Strategic upgrade motivation
-- 📊 **Rich Analytics**: Detailed usage pattern insights
-- 🎨 **Improved UX**: No artificial browsing restrictions
-
-#### **Technical Advantages**
-- 🚀 **Scalable**: Easy to modify limits or add features
-- 🛡️ **Robust**: Comprehensive error handling and edge cases
-- 🔧 **Maintainable**: Clean separation of concerns
-- 🧪 **Testable**: Clear business logic and data flows
-
-## 📊 Content Management
-
-### Content Types
-- **Articles**: Rich text content with categories
-- **Videos**: Video content with metadata
-- **Categories**: Hierarchical organization
-
-### CMS Features
-- Content creation and editing
-- Publishing workflow
-- Analytics dashboard
-- Bulk operations
-- Media management
-
-## 🛠️ API Documentation
-
-### Interactive Swagger Documentation
-
-The API includes comprehensive **Swagger/OpenAPI 3.0** documentation with an interactive interface:
-
-**🌐 Live Documentation**: http://localhost:5001/api-docs
-
-#### Features:
-- **Interactive Testing**: Test all API endpoints directly from the browser
-- **Authentication Support**: Built-in JWT token authentication testing
-- **Request/Response Examples**: Complete examples for all endpoints
-- **Schema Validation**: Detailed request/response schema documentation
-- **Error Handling**: Comprehensive error response documentation
-
-#### Quick API Overview:
-
-### Authentication Endpoints
-```
-# Email/Password Authentication
-POST   /api/auth/register       # User registration with email/password
-POST   /api/auth/login          # User login with email/password
-
-# OAuth Authentication  
-GET    /api/auth/google         # Google OAuth initiation
-GET    /api/auth/google/callback # Google OAuth callback with account linking
-GET    /api/auth/facebook       # Facebook OAuth initiation
-GET    /api/auth/facebook/callback # Facebook OAuth callback
-
-# User Management
-GET    /api/auth/profile        # Get current user profile
-PUT    /api/auth/membership     # Update membership tier
-POST   /api/auth/logout         # Logout user
-```
-
-### Content Endpoints
-```
-GET    /api/articles             # List articles
-GET    /api/articles/:id         # Get article
-POST   /api/articles             # Create article (Auth)
-PUT    /api/articles/:id         # Update article (Auth)
-DELETE /api/articles/:id         # Delete article (Admin)
-
-GET    /api/videos               # List videos
-GET    /api/videos/:id           # Get video
-POST   /api/videos               # Create video (Auth)
-PUT    /api/videos/:id           # Update video (Auth)
-DELETE /api/videos/:id           # Delete video (Admin)
-```
-
-### Management Endpoints
-```
-GET    /api/cms/dashboard        # Dashboard stats (Admin/Editor)
-GET    /api/cms/analytics        # Content analytics (Admin/Editor)
-POST   /api/cms/bulk             # Bulk operations (Admin/Editor)
-
-GET    /api/users                # List users (Admin)
-GET    /api/users/:id            # Get user (Admin)
-PUT    /api/users/:id/role       # Update user role (Admin)
-DELETE /api/users/:id            # Delete user (Admin)
-```
-
-### **Testing Date-Based Daily Limits System**
-
-### **🧪 Manual Testing Scenarios**
-
-#### **Scenario 1: Date-Based Counter Testing**
-1. **Create TYPE_A User** (3 articles, 3 videos daily)
-2. **First Access** → Counter: 0→1, timestamp recorded
-3. **Second Access** → Counter: 1→2, new timestamp  
-4. **Third Access** → Counter: 2→3, reach limit
-5. **Fourth Access** → Blocked with upgrade message
-6. **Re-access Content** → FREE (counter stays at 3)
-
-#### **Scenario 2: Automatic Date Reset Testing**
-```bash
-# The system automatically detects date changes:
-
-# Day 1 (2025-06-14)
-curl -X GET /api/articles/123 -H "Authorization: Bearer TOKEN"
-# Response: dailyUsed: 1, lastAccessDate: "2025-06-14"
-
-# Day 2 (2025-06-15) - Automatic Reset
-curl -X GET /api/articles/456 -H "Authorization: Bearer TOKEN"  
-# Response: dailyUsed: 1, lastAccessDate: "2025-06-15"
-# Previous day's content automatically "forgotten"
-```
-
-#### **Scenario 3: Smart Re-Access Logic**
-1. **Morning:** Access "React Tutorial" → `dailyUsed: 1`
-2. **Afternoon:** Re-access same article → `dailyUsed: 1` (FREE)
-3. **Evening:** Re-access again → `dailyUsed: 1` (FREE)
-4. **Access New Article:** → `dailyUsed: 2` (new content)
-
-#### **Scenario 4: Real-Time API Response Testing**
-```json
-// Articles listing response shows live status:
-{
-  "membershipStatus": {
-    "tier": "TYPE_A",
-    "dailyLimit": 3,
-    "dailyUsed": 2,           // Calculated in real-time
-    "dailyRemaining": 1,      // Auto-updated
-    "message": "2/3 daily articles accessed"
-  }
-}
-```
-
-#### **Scenario 5: Cross-Content Type Testing**
-1. **Access 2 Articles** → Articles: 2/3, Videos: 0/3
-2. **Access 2 Videos** → Articles: 2/3, Videos: 2/3  
-3. **Re-access All Previous** → No counter changes (FREE)
-4. **Access New Article** → Articles: 3/3, Videos: 2/3
-5. **Access New Video** → Articles: 3/3, Videos: 3/3
-6. **Try Additional** → Both limits reached
-
-### **🔍 API Testing with Swagger**
-
-Access interactive documentation: **http://localhost:5001/api-docs**
-
-#### **Test Date-Based Tracking via API**
-```bash
-# 1. Register new user
-curl -X POST http://localhost:5001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test User", "email": "test@example.com", "password": "password123"}'
-
-# 2. Get articles list (shows real-time status)
-curl -X GET http://localhost:5001/api/articles \
-  -H "Authorization: Bearer YOUR_TOKEN"
-# Response includes: membershipStatus with dailyUsed count
-
-# 3. Access article detail (consumes limit)
-curl -X GET http://localhost:5001/api/articles/ARTICLE_ID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 4. Check user profile (see access history)
-curl -X GET http://localhost:5001/api/auth/profile \
-  -H "Authorization: Bearer YOUR_TOKEN"
-# Response shows: accessedContentToday with timestamps
-
-# 5. Re-access same article (should be FREE)
-curl -X GET http://localhost:5001/api/articles/ARTICLE_ID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 6. Check status again (counter should be unchanged)
-curl -X GET http://localhost:5001/api/articles \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-# 5. Re-access same article (should be free)
-GET /api/articles/{id}
-```
-
-### **Automated Testing**
-
-#### **Backend Unit Tests**
-```bash
-cd apps/backend
-npm test
-
-# Test coverage includes:
-# - User model methods (checkAndResetDailyLimit, canAccessContentDetail, recordContentAccess)
-# - Controller logic (daily limit checking, re-access detection)
-# - Membership tier enforcement
-# - Daily reset functionality
-```
-
-#### **Frontend Component Tests**
-```bash
-cd apps/frontend
-npm test
-
-# Test coverage includes:
-# - Daily status display components
-# - Usage progress bars
-# - Membership status cards
-# - Error handling for daily limits
-# - Re-access indicators
-```
-
-#### **Integration Tests**
-```bash
-# Full user flow testing
-npm run test:integration
-
-# Covers:
-# - End-to-end daily limit workflow
-# - Cross-browser compatibility
-# - Mobile responsive behavior
-# - Authentication + daily limits interaction
-```
-
-#### **Performance Testing**
-
-##### **Load Testing Daily Reset**
-```bash
-# Test system behavior during daily reset
-# Simulate multiple users accessing content simultaneously
-# Verify counter accuracy under concurrent access
-```
-
-##### **Database Performance**
-```bash
-# Test query performance with daily limit fields
-# Verify indexing on lastAccessDate field
-# Monitor response times for content access checks
-```
-
-### **Troubleshooting Common Issues**
-
-#### **Daily Limits Not Resetting**
-```bash
-# Check user's lastAccessDate field
-# Verify timezone handling in daily reset logic
-# Test checkAndResetDailyLimit() method manually
-```
-
-#### **Re-access Not Working**
-```bash
-# Verify content ID tracking in accessedContentToday arrays
-# Check recordContentAccess() method implementation
-# Test with different content types (articles vs videos)
-```
-
-#### **Counter Discrepancies**
-```bash
-# Verify atomic operations in recordContentAccess()
-# Check for race conditions in concurrent access
-# Test counter consistency across sessions
-```
-
-### **Monitoring & Analytics**
-
-#### **Daily Usage Metrics**
-- Track average daily consumption per membership tier
-- Monitor upgrade conversion rates after limit hits
-- Analyze re-access patterns and frequency
-- Measure user engagement with daily reset feature
-
-#### **System Health Checks**
-```bash
-# Monitor daily reset operations
-# Track API response times for limit checks
-# Monitor database performance for daily queries
-# Alert on unusual usage patterns or errors
-```
-
-## 🔧 Development
-
-### Scripts
-```bash
-# Development
-npm run dev                     # Start all services
-npm run dev:frontend           # Frontend development
-npm run dev:backend            # Backend development
-
-# Building
-npm run build                  # Build all packages
-npm run build:frontend         # Build frontend
-npm run build:backend          # Build backend
-npm run build:shared           # Build shared package
-
-# Testing
-npm test                       # Run all tests
-npm run test:frontend          # Frontend tests
-npm run test:backend           # Backend tests
-
-# Linting
-npm run lint                   # Lint all packages
-npm run lint:fix               # Fix lint issues
-
-# Documentation
-open http://localhost:5001/api-docs  # Open Swagger docs
-curl http://localhost:5001/health    # Test API health
-```
-
-### Code Quality
-- **TypeScript** for type safety
-- **ESLint** for code consistency
-- **Prettier** for code formatting
-- **Husky** for git hooks
-
-## 🚀 Deployment
-
-### Production Environment Variables
-
-#### Backend
-```env
-NODE_ENV=production
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/social-media-platform
-JWT_SECRET=your-production-jwt-secret
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-FACEBOOK_APP_ID=your-facebook-app-id
-FACEBOOK_APP_SECRET=your-facebook-app-secret
-```
-
-#### Frontend
-```env
-REACT_APP_API_URL=https://api.yourdomain.com
-REACT_APP_GOOGLE_CLIENT_ID=your-google-client-id
-REACT_APP_FACEBOOK_APP_ID=your-facebook-app-id
-```
-
-### Docker Deployment
-```bash
-# Build and deploy
-docker-compose -f docker-compose.prod.yml up -d
-
-# Scale services
-docker-compose up -d --scale backend=3
-```
-
-### Cloud Deployment Options
-- **AWS**: ECS, EKS, or Elastic Beanstalk
-- **Google Cloud**: Cloud Run or GKE
-- **Azure**: Container Instances or AKS
-- **Digital Ocean**: App Platform
-- **Heroku**: Container deployment
-
-## 🎯 System Highlights & Achievements
-
-### **🚀 Revolutionary Daily Access System**
-
-This platform implements a **cutting-edge date-based content access system** that sets new standards for content management platforms:
-
-#### **✨ Key Innovations**
-- **🗓️ Self-Managing Daily Limits**: Automatic date detection without background jobs
-- **⚡ Real-Time Accuracy**: Always current usage counts regardless of server state
-- **🔄 Smart Re-Access**: Free revisits to consumed content within the same day
-- **📊 Intelligent UI**: Dynamic progress indicators and membership status
-- **🎯 Strategic Engagement**: Encourages daily platform visits and thoughtful content selection
-
-#### **💡 Technical Excellence**
-- **Zero Maintenance**: No scheduled tasks, cron jobs, or background processes
-- **Timezone Independent**: Works correctly across global user bases
-- **Backward Compatible**: Seamless migration from legacy systems
-- **Performance Optimized**: Scales naturally with user activity patterns
-- **Analytics Ready**: Rich timestamp data for business intelligence
-
-#### **🏆 Business Benefits**
-- **User Engagement**: Daily visit incentives through fresh daily limits
-- **Conversion Optimization**: Clear upgrade paths when limits are reached
-- **Operational Efficiency**: Self-maintaining system reduces infrastructure costs
-- **Data Insights**: Detailed access patterns for content strategy
-- **Scalable Growth**: Architecture supports unlimited user growth
-
-### **📈 Feature Summary**
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **Date-Based Tracking** | ✅ Complete | Self-updating daily limits with timestamp precision |
-| **Smart Re-Access** | ✅ Complete | Free revisits to consumed content |
-| **Real-Time UI** | ✅ Complete | Live progress bars and membership status |
-| **Multi-Content Support** | ✅ Complete | Independent tracking for articles and videos |
-| **Membership Tiers** | ✅ Complete | TYPE_A (3/3), TYPE_B (10/10), TYPE_C (unlimited) |
-| **Authentication** | ✅ Complete | Email/Password + Google/Facebook OAuth |
-| **Content Management** | ✅ Complete | Full CRUD operations with role-based access |
-| **API Documentation** | ✅ Complete | Interactive Swagger with live testing |
-| **Error Handling** | ✅ Complete | Context-aware messages and upgrade prompts |
-| **Mobile Responsive** | ✅ Complete | Tailwind CSS with mobile-first design |
-
-### **🌟 User Experience Highlights**
-- **Unlimited Browsing**: All users see complete content catalog
-- **Strategic Choice**: Users decide which content to consume from daily allowance
-- **Immediate Feedback**: Real-time usage indicators and remaining quotas
-- **Seamless Re-Access**: Return to consumed content without penalty
-- **Clear Upgrade Path**: Transparent benefits of higher membership tiers
+## 📚 Complete Documentation
+
+### **🚀 For Testers & QA**
+- **[⚡ 5-Minute Tester Setup](./TESTER-SETUP-GUIDE.md)** - Quick setup guide for testing
+- **[🚀 Quick Start Guide](./QUICK-START.md)** - Developer quick start
+- **[🗺️ Complete User Journey](./docs/USER-JOURNEY.md)** - Comprehensive user flows and testing scenarios
+
+### **🔧 For Developers**
+- **[📋 API Documentation](http://localhost:5001/api-docs)** - Interactive Swagger documentation
+- **[🏗️ Complete Architecture](./docs/COMPLETE-ADMIN-SYSTEM.md)** - System architecture details
+- **[📖 Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment instructions
+
+### **💡 Key Testing Resources**
+- **Test User Accounts**: 4 pre-configured users with different roles and limits
+- **Sample Content**: 5 articles + 5 videos with realistic data
+- **Interactive API**: Live testing via Swagger UI
+- **Real-time Monitoring**: Usage tracking and limit enforcement
 
 ---
 
