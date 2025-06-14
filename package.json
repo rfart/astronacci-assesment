@@ -17,7 +17,8 @@
     "clean": "npm run clean --workspaces",
     "install:all": "npm install",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "populate:test-data": "npm run populate:test-data --workspace=backend"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
