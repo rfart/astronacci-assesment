@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { articleService, Article } from '../services/articleService';
 
@@ -8,30 +8,43 @@ const Articles: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page on new search
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const fetchArticles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await articleService.getArticles({
+        page,
+        limit: 12,
+        search: debouncedSearch || undefined,
+      });
+      setArticles(response.data);
+      setTotalPages(response.pagination.pages);
+    } catch (error) {
+      console.error('Failed to fetch articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, debouncedSearch]);
 
   useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        setLoading(true);
-        const response = await articleService.getArticles({
-          page,
-          limit: 12,
-          search: search || undefined,
-        });
-        setArticles(response.data);
-        setTotalPages(response.pagination.pages);
-      } catch (error) {
-        console.error('Failed to fetch articles:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchArticles();
-  }, [page, search]);
+  }, [fetchArticles]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // Immediately update debounced search on form submit
+    setDebouncedSearch(search);
     setPage(1);
   };
 

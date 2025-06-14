@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { User as IUser, MembershipTier } from '@astronacci/shared';
+import { User as IUser, MembershipTier, UserRole } from '@astronacci/shared';
 
-interface UserDocument extends Omit<IUser, '_id'>, Document {}
+interface UserDocument extends Omit<IUser, '_id'>, Document {
+  role: UserRole;
+}
 
 const userSchema = new Schema<UserDocument>({
   email: {
@@ -24,6 +26,12 @@ const userSchema = new Schema<UserDocument>({
     type: String,
     enum: Object.values(MembershipTier),
     default: MembershipTier.TYPE_A,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: Object.values(UserRole),
+    default: UserRole.USER,
     required: true
   },
   socialProvider: {

@@ -73,35 +73,39 @@ export class UserController {
   // Update user role (Admin only)
   public updateUserRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { id } = req.params;
       const { role } = req.body;
 
-      if (!['user', 'editor', 'admin'].includes(role)) {
+      const validRoles = ['user', 'editor', 'admin'];
+      if (!validRoles.includes(role)) {
         res.status(400).json({
           success: false,
-          message: 'Invalid role',
+          message: 'Invalid role. Must be: user, editor, or admin'
         });
         return;
       }
 
-      const user = await User.findByIdAndUpdate(
-        id,
-        { role },
-        { new: true, runValidators: true }
-      ).select('-password');
-
+      const user = await User.findById(req.params.id);
       if (!user) {
         res.status(404).json({
           success: false,
-          message: 'User not found',
+          message: 'User not found'
         });
         return;
       }
 
+      user.role = role;
+      await user.save();
+
       res.json({
         success: true,
-        data: user,
-        message: 'User role updated successfully',
+        message: `User role updated to ${role}`,
+        data: {
+          _id: user._id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          membershipTier: user.membershipTier
+        }
       });
     } catch (error) {
       next(error);

@@ -40,7 +40,10 @@ router.get('/google',
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/auth/failure' }),
+  passport.authenticate('google', { 
+    failureRedirect: '/api/auth/failure',
+    session: false 
+  }),
   authController.handleOAuthSuccess
 );
 
@@ -78,7 +81,10 @@ router.get('/facebook',
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/facebook/callback',
-  passport.authenticate('facebook', { failureRedirect: '/auth/failure' }),
+  passport.authenticate('facebook', { 
+    failureRedirect: '/api/auth/failure',
+    session: false 
+  }),
   authController.handleOAuthSuccess
 );
 

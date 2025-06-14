@@ -69,14 +69,13 @@ export const authorizeRole = (allowedRoles: string[]) => {
       return;
     }
 
-    // For now, we'll treat all users as having 'user' role
-    // In a real app, you'd have a role field in the user model
-    const userRole = req.user.email?.includes('admin') ? 'admin' : 'user';
+    // Use the role field from the user model
+    const userRole = req.user.role || 'user';
     
     if (!allowedRoles.includes(userRole)) {
       res.status(403).json({
         success: false,
-        message: 'Insufficient permissions.'
+        message: `Insufficient permissions. Required: ${allowedRoles.join(' or ')}, Your role: ${userRole}`
       });
       return;
     }

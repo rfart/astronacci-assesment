@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 5000
+      PORT: 5001
       MONGODB_URI: mongodb://admin:password@mongodb:27017/social-media-platform?authSource=admin
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
@@ -50,7 +50,7 @@ services:
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
       FRONTEND_URL: http://localhost:3000
     ports:
-      - "5000:5000"
+      - "5001:5001"
     depends_on:
       - mongodb
       - redis
@@ -67,7 +67,7 @@ services:
     container_name: social-media-frontend
     restart: unless-stopped
     environment:
-      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_API_URL: http://localhost:5001/api
       REACT_APP_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       REACT_APP_FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
     ports:

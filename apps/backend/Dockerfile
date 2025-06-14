@@ -9,8 +9,8 @@ COPY package*.json ./
 COPY apps/backend/package*.json ./apps/backend/
 COPY packages/shared/package*.json ./packages/shared/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY apps/backend/ ./apps/backend/
@@ -23,6 +23,10 @@ RUN npm run build
 # Build backend
 WORKDIR /usr/src/app/apps/backend
 RUN npm run build
+
+# Clean up dev dependencies for production
+WORKDIR /usr/src/app
+RUN npm ci --only=production
 
 # Expose port
 EXPOSE 5000

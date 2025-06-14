@@ -9,6 +9,12 @@ export enum ContentType {
   VIDEO = 'video'
 }
 
+export enum UserRole {
+  USER = 'user',
+  EDITOR = 'editor',
+  ADMIN = 'admin'
+}
+
 export interface MembershipLimits {
   articles: number;
   videos: number;
@@ -26,6 +32,7 @@ export interface User {
   name: string;
   avatar?: string;
   membershipTier: MembershipTier;
+  role: UserRole;
   socialProvider: 'google' | 'facebook' | 'local';
   socialId?: string;
   articlesRead: number;

@@ -15,13 +15,34 @@ export class AuthController {
   public handleOAuthSuccess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = req.user as any;
+      
+      if (!user) {
+        res.status(401).json({
+          success: false,
+          error: 'Authentication failed - no user found'
+        });
+        return;
+      }
+
+      if (!user._id) {
+        res.status(401).json({
+          success: false,
+          error: 'Authentication failed - invalid user data'
+        });
+        return;
+      }
+
       const token = this.generateToken(user._id);
       
       // Redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
-      next(error);
+      console.error('OAuth success handler error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Authentication processing failed'
+      });
     }
   };
 
