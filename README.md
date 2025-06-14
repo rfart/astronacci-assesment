@@ -134,20 +134,46 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## 👥 Membership System
+## 👥 Daily Content Access System
 
-### Membership Tiers
+### 🔄 **New Daily Limits Implementation**
 
-| Tier | Articles/Month | Videos/Month | Features |
-|------|---------------|--------------|----------|
-| **Type A** | 3 | 3 | Basic access, Free |
-| **Type B** | 10 | 10 | Premium content, $9.99/month |
-| **Type C** | Unlimited | Unlimited | All features, $19.99/month |
+The platform now uses a **daily content access system** instead of monthly limits. This provides a better user experience by allowing users to see all available content while managing access to detailed views.
+
+### Membership Tiers & Daily Limits
+
+| Tier | Daily Articles | Daily Videos | Features | Price |
+|------|---------------|--------------|----------|-------|
+| **Type A** | 3 | 3 | Basic daily access, Free | Free |
+| **Type B** | 10 | 10 | Enhanced daily access | $9.99/month |
+| **Type C** | Unlimited | Unlimited | All features, unlimited access | $19.99/month |
+
+### 🎯 **How Daily Limits Work**
+
+#### **Content Discovery (Unlimited)**
+- ✅ **All users can browse all content** in listing pages
+- ✅ **Full visibility** of articles and videos
+- ✅ **Search and filter** through all available content
+- ✅ **See titles, excerpts, and metadata** for all content
+
+#### **Content Access (Daily Limited)**
+- 📖 **Article Detail Pages**: Count against daily article limit
+- 🎥 **Video Detail Pages**: Count against daily video limit
+- 🔄 **Smart Re-access**: Revisiting content accessed earlier today is **FREE**
+- 🌙 **Daily Reset**: Limits reset automatically at midnight
+
+#### **Key Features**
+1. **📅 Daily Reset**: Fresh limits every day at midnight
+2. **🔄 Free Re-access**: No double-counting for content revisits
+3. **👀 Full Content Discovery**: Browse everything, decide what to read/watch
+4. **📊 Usage Tracking**: Real-time progress bars and usage indicators
+5. **🛡️ Graceful Limits**: Clear messaging when daily limits are reached
 
 ### Content Access Control
-- Automatic enforcement based on membership tier
-- View tracking per user
-- Graceful upgrade prompts
+- ✅ **Browse Unlimited**: All users see all content listings
+- ⚡ **Daily Tracking**: Smart counting with re-access protection
+- 🎯 **Strategic Access**: Users can choose which content to consume
+- 📈 **Engagement Driven**: Encourages daily platform visits
 
 ## 🔐 Authentication & Authorization
 
@@ -182,6 +208,192 @@ docker-compose down
 - Account linking security checks
 - Rate limiting and input validation
 - Secure session management
+
+## 🛠️ Daily Limits Implementation Details
+
+### Backend Architecture
+
+#### **Enhanced User Model**
+```typescript
+// New fields added to User schema
+interface UserDocument {
+  // Existing fields...
+  dailyArticlesAccessed: number;     // Count of articles accessed today
+  dailyVideosAccessed: number;       // Count of videos accessed today
+  lastAccessDate: Date;              // Last access date for daily reset tracking
+  accessedContentToday: {
+    articles: string[];              // Array of article IDs accessed today
+    videos: string[];                // Array of video IDs accessed today
+  };
+}
+```
+
+#### **Smart Access Methods**
+- **`checkAndResetDailyLimit()`**: Automatically resets counters at midnight
+- **`canAccessContentDetail()`**: Checks access permission with detailed reasoning
+- **`recordContentAccess()`**: Records access only on first visit per day
+
+#### **Controller Updates**
+- **Article/Video Listing**: No restrictions, all content visible to all users
+- **Article/Video Detail**: Daily limit checking with smart re-access logic
+- **Membership Status**: Real-time usage information in API responses
+
+### Frontend Enhancements
+
+#### **UI Components**
+- **Progress Bars**: Visual daily usage indicators
+- **Membership Cards**: Clear tier information and benefits
+- **Error Handling**: Specific messages for daily limit scenarios
+- **Re-access Indicators**: Shows when content can be revisited for free
+
+#### **User Experience Flow**
+1. **Browse Phase**: User sees all available content
+2. **Selection Phase**: User chooses content to consume
+3. **Access Phase**: System checks daily limits and content history
+4. **Consumption Phase**: Content delivered with usage tracking
+5. **Re-access Phase**: Free revisits to consumed content
+
+### Data Migration
+
+#### **Existing Users Update**
+Run the provided migration script to update existing users:
+```bash
+cd apps/backend
+npm run migrate:daily-limits
+```
+
+The script adds new daily tracking fields to all existing user records:
+- Sets initial daily counters to 0
+- Initializes empty content access arrays
+- Sets current date as last access date
+
+## 🔄 Migration to Daily Limits System
+
+### **For Existing Installations**
+
+If you have an existing installation with the old monthly limits system, follow these steps to migrate to the new daily limits system:
+
+#### **Step 1: Update Codebase**
+```bash
+# Pull latest changes
+git pull origin main
+
+# Install any new dependencies
+npm install
+```
+
+#### **Step 2: Run Database Migration**
+```bash
+# Navigate to backend directory
+cd apps/backend
+
+# Run the migration script to update existing users
+npm run migrate:daily-limits
+
+# Alternative: Run directly with ts-node
+npx ts-node scripts/update-user-daily-limits.ts
+```
+
+#### **Step 3: Verify Migration**
+```bash
+# Check that all users have new daily limit fields
+# The migration script will output the number of users updated
+
+# Example output:
+# Connected to database
+# Updated 150 users with new daily limit fields
+# Total users with daily limit fields: 150
+# Migration completed successfully
+```
+
+#### **Step 4: Test the System**
+1. **Login to Frontend** → http://localhost:3000
+2. **Check Daily Status** → Should show "0/3 articles, 0/3 videos accessed today"
+3. **Access Content** → Verify daily limits work correctly
+4. **Test Re-access** → Verify free re-access to consumed content
+5. **Wait for Reset** → Test daily reset functionality
+
+### **Migration Script Details**
+
+The migration script (`apps/backend/scripts/update-user-daily-limits.ts`):
+- ✅ **Adds new fields** to existing user documents
+- ✅ **Initializes counters** to 0 for all users
+- ✅ **Sets up content tracking** arrays
+- ✅ **Preserves existing data** (no data loss)
+- ✅ **Idempotent operation** (safe to run multiple times)
+
+#### **New User Fields Added:**
+```typescript
+dailyArticlesAccessed: 0        // Daily article counter
+dailyVideosAccessed: 0          // Daily video counter
+lastAccessDate: new Date()      // For daily reset tracking
+accessedContentToday: {
+  articles: [],                 // Today's accessed article IDs
+  videos: []                    // Today's accessed video IDs
+}
+```
+
+### **For Fresh Installations**
+
+Fresh installations automatically include the daily limits system:
+
+```bash
+# Clone and setup
+git clone <repository-url>
+cd astronacci-assesment
+npm install
+
+# Start with daily limits system
+npm run dev
+```
+
+**No migration needed** - all users created after this update will automatically have daily limit tracking.
+
+### API Changes
+
+#### **Response Structure Updates**
+```typescript
+// New membership status in listing responses
+{
+  "membershipStatus": {
+    "tier": "TYPE_A",
+    "dailyLimit": 3,
+    "dailyUsed": 1,
+    "dailyRemaining": 2,
+    "message": "1/3 daily articles accessed"
+  }
+}
+```
+
+#### **Error Handling**
+```typescript
+// New error code for daily limits
+{
+  "success": false,
+  "message": "Daily article limit reached (3/3). Try again tomorrow or upgrade your membership.",
+  "code": "DAILY_LIMIT_REACHED"
+}
+```
+
+### Benefits of New System
+
+#### **For Users**
+- 🎯 **Better Content Discovery**: See everything available
+- 🔄 **Flexible Access**: Re-read/rewatch without penalties
+- 📅 **Daily Fresh Start**: New opportunities every day
+- 📊 **Clear Usage Tracking**: Know exactly where you stand
+
+#### **For Platform**
+- 📈 **Increased Engagement**: Daily return visits encouraged
+- 💰 **Better Monetization**: Strategic upgrade motivation
+- 📊 **Rich Analytics**: Detailed usage pattern insights
+- 🎨 **Improved UX**: No artificial browsing restrictions
+
+#### **Technical Advantages**
+- 🚀 **Scalable**: Easy to modify limits or add features
+- 🛡️ **Robust**: Comprehensive error handling and edge cases
+- 🔧 **Maintainable**: Clean separation of concerns
+- 🧪 **Testable**: Clear business logic and data flows
 
 ## 📊 Content Management
 
@@ -259,12 +471,158 @@ PUT    /api/users/:id/role       # Update user role (Admin)
 DELETE /api/users/:id            # Delete user (Admin)
 ```
 
-### Testing with Swagger UI
+### Testing Daily Limits System
 
-1. **Open Swagger Documentation**: http://localhost:5001/api-docs
-2. **Authenticate**: Click "Authorize" button and enter JWT token
-3. **Test Endpoints**: Click on any endpoint to expand and test
-4. **View Responses**: See real-time responses and status codes
+### **Manual Testing Scenarios**
+
+#### **Scenario 1: Basic Daily Limit Testing**
+1. **Create TYPE_A User** (3 articles, 3 videos daily)
+2. **Access 3 Articles** → Verify counter increments (1/3, 2/3, 3/3)
+3. **Try 4th Article** → Should show "Daily limit reached" message
+4. **Re-access Article 1** → Should work FREE (no counter increment)
+5. **Browse Listings** → Should work without restrictions
+
+#### **Scenario 2: Daily Reset Testing**
+```bash
+# Option 1: Wait for midnight (real-time testing)
+# Access content before midnight
+# Check limits reset after midnight
+
+# Option 2: Manual testing with date manipulation
+# Temporarily modify system date for testing
+# Verify reset behavior
+```
+
+#### **Scenario 3: Re-access Logic Testing**
+1. **Morning:** Access "React Tutorial" article (1/3 used)
+2. **Afternoon:** Re-access same article → Should be FREE
+3. **Evening:** Re-access again → Should still be FREE
+4. **Check Counter:** Should still show 1/3 used
+
+#### **Scenario 4: Mixed Content Testing**
+1. **Access 2 Articles** (2/3 used)
+2. **Access 2 Videos** (2/3 used)
+3. **Re-access Previous Content** → All should be FREE
+4. **Access 1 More Article** (3/3 used)
+5. **Try New Video** (3/3 used)
+6. **Try Additional Content** → Should hit limits
+
+### **API Testing with Swagger**
+
+Access interactive API documentation: http://localhost:5001/api-docs
+
+#### **Test Daily Limits via API**
+```bash
+# 1. Register/Login user
+POST /api/auth/register
+POST /api/auth/login
+
+# 2. Get articles list (should show all content)
+GET /api/articles
+
+# 3. Access article detail (should consume daily limit)
+GET /api/articles/{id}
+
+# 4. Check user status
+GET /api/users/profile
+
+# 5. Re-access same article (should be free)
+GET /api/articles/{id}
+```
+
+### **Automated Testing**
+
+#### **Backend Unit Tests**
+```bash
+cd apps/backend
+npm test
+
+# Test coverage includes:
+# - User model methods (checkAndResetDailyLimit, canAccessContentDetail, recordContentAccess)
+# - Controller logic (daily limit checking, re-access detection)
+# - Membership tier enforcement
+# - Daily reset functionality
+```
+
+#### **Frontend Component Tests**
+```bash
+cd apps/frontend
+npm test
+
+# Test coverage includes:
+# - Daily status display components
+# - Usage progress bars
+# - Membership status cards
+# - Error handling for daily limits
+# - Re-access indicators
+```
+
+#### **Integration Tests**
+```bash
+# Full user flow testing
+npm run test:integration
+
+# Covers:
+# - End-to-end daily limit workflow
+# - Cross-browser compatibility
+# - Mobile responsive behavior
+# - Authentication + daily limits interaction
+```
+
+#### **Performance Testing**
+
+##### **Load Testing Daily Reset**
+```bash
+# Test system behavior during daily reset
+# Simulate multiple users accessing content simultaneously
+# Verify counter accuracy under concurrent access
+```
+
+##### **Database Performance**
+```bash
+# Test query performance with daily limit fields
+# Verify indexing on lastAccessDate field
+# Monitor response times for content access checks
+```
+
+### **Troubleshooting Common Issues**
+
+#### **Daily Limits Not Resetting**
+```bash
+# Check user's lastAccessDate field
+# Verify timezone handling in daily reset logic
+# Test checkAndResetDailyLimit() method manually
+```
+
+#### **Re-access Not Working**
+```bash
+# Verify content ID tracking in accessedContentToday arrays
+# Check recordContentAccess() method implementation
+# Test with different content types (articles vs videos)
+```
+
+#### **Counter Discrepancies**
+```bash
+# Verify atomic operations in recordContentAccess()
+# Check for race conditions in concurrent access
+# Test counter consistency across sessions
+```
+
+### **Monitoring & Analytics**
+
+#### **Daily Usage Metrics**
+- Track average daily consumption per membership tier
+- Monitor upgrade conversion rates after limit hits
+- Analyze re-access patterns and frequency
+- Measure user engagement with daily reset feature
+
+#### **System Health Checks**
+```bash
+# Monitor daily reset operations
+# Track API response times for limit checks
+# Monitor database performance for daily queries
+# Alert on unusual usage patterns or errors
+```
 
 ## 🔧 Development
 
@@ -339,130 +697,6 @@ docker-compose up -d --scale backend=3
 - **Azure**: Container Instances or AKS
 - **Digital Ocean**: App Platform
 - **Heroku**: Container deployment
-
-## 📈 Monitoring & Analytics
-
-### Available Metrics
-- User registration and engagement
-- Content views and popularity
-- Membership conversion rates
-- API performance and errors
-- Database performance
-
-### Recommended Tools
-- **Application**: New Relic, DataDog
-- **Database**: MongoDB Atlas Monitoring
-- **Frontend**: Google Analytics, Sentry
-- **Infrastructure**: Prometheus + Grafana
-
-## 🤝 Contributing
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Run linting and tests
-6. Submit a pull request
-
-### Code Standards
-- Follow TypeScript best practices
-- Write meaningful commit messages
-- Add JSDoc comments for public APIs
-- Maintain test coverage above 80%
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-- [Frontend Documentation](apps/frontend/README.md)
-- [Backend Documentation](apps/backend/README.md)
-- [API Documentation](docs/API.md)
-- [**📚 Interactive Swagger Documentation**](docs/SWAGGER.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-
-## ✅ Current Implementation Status
-
-### **Completed Features** ✅
-- [x] **Comprehensive Authentication System**
-  - [x] Email/password registration and login with secure bcrypt hashing
-  - [x] Google OAuth integration with automatic account linking
-  - [x] Facebook OAuth support
-  - [x] Unified login/registration interface with form switching
-  - [x] JWT token authentication with configurable expiration
-  - [x] Real-time form validation and error handling
-- [x] **User Management & Authorization**
-  - [x] Role-based access control (User/Editor/Admin)
-  - [x] Membership tiers with content limits (Type A/B/C)
-  - [x] Admin user management dashboard
-  - [x] User profile management
-- [x] **Content Management System**
-  - [x] Article creation and management
-  - [x] Content consumption tracking
-  - [x] Search functionality with debouncing
-  - [x] Category-based content organization
-- [x] **Frontend Features**
-  - [x] Responsive web design with Tailwind CSS
-  - [x] Dynamic form handling and validation
-  - [x] Modern, accessible UI components
-  - [x] OAuth integration with fallback handling
-- [x] **API & Documentation**
-  - [x] Interactive Swagger API documentation
-  - [x] Comprehensive endpoint coverage
-  - [x] Authentication testing in Swagger UI
-  - [x] Real-time API testing capabilities
-
-### **In Development** 🚧
-- [ ] Video content management system
-- [ ] Advanced content editor with rich text
-- [ ] User analytics dashboard
-- [ ] Email notification system
-- [ ] Content moderation tools
-
-### **Future Roadmap** 📋
-- [ ] Mobile application (React Native)
-- [ ] Payment processing for premium tiers
-- [ ] Advanced search filters and sorting
-- [ ] Social media sharing integration
-- [ ] AI-powered content recommendations
-- [ ] Multi-language support
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### MongoDB Connection
-```bash
-# Check MongoDB status
-mongo --eval "db.adminCommand('ismaster')"
-
-# Reset database
-npm run db:reset
-```
-
-#### OAuth Configuration
-- Verify redirect URLs in OAuth providers
-- Check environment variables
-- Ensure HTTPS in production
-
-#### Build Issues
-```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
-
-# Clear TypeScript cache
-npx tsc --build --clean
-```
-
-## 📞 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check existing documentation
-- Contact the development team
 
 ---
 

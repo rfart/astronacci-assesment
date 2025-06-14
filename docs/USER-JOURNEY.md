@@ -1,5 +1,5 @@
 # 🚀 Complete User Journey Documentation
-## Social Media Platform - Astronacci Assessment
+## Social Media Platform - Daily Content Access System
 
 *Last Updated: June 14, 2025*
 
@@ -8,26 +8,30 @@
 ## 📖 Table of Contents
 
 1. [Platform Overview](#platform-overview)
-2. [User Types & Roles](#user-types--roles)
-3. [Guest User Journey](#guest-user-journey)
-4. [Regular User Journey](#regular-user-journey)
-5. [Editor Journey](#editor-journey)
-6. [Admin Journey](#admin-journey)
-7. [Technical Integration](#technical-integration)
-8. [API Documentation](#api-documentation)
-9. [Troubleshooting](#troubleshooting)
+2. [Daily Content Access System](#daily-content-access-system)
+3. [User Types & Roles](#user-types--roles)
+4. [Guest User Journey](#guest-user-journey)
+5. [Regular User Journey](#regular-user-journey)
+6. [Daily Content Consumption Flow](#daily-content-consumption-flow)
+7. [Editor Journey](#editor-journey)
+8. [Admin Journey](#admin-journey)
+9. [Technical Integration](#technical-integration)
+10. [API Documentation](#api-documentation)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## 🎯 Platform Overview
 
-The **Astronacci Social Media Platform** is a content management and consumption platform featuring:
+The **Astronacci Social Media Platform** is a content management and consumption platform featuring a revolutionary **Daily Content Access System** that maximizes user engagement while managing content consumption.
 
-- **Content Types:** Articles & Videos
-- **Authentication:** Google OAuth integration
-- **Membership Tiers:** TYPE_A, TYPE_B, TYPE_C with content limits
-- **Role-Based Access:** User, Editor, Admin permissions
-- **Interactive API:** Swagger documentation with live testing
+### **Core Features**
+- **📚 Content Types:** Articles & Videos with rich metadata
+- **🔐 Authentication:** Multiple methods (Email/Password, Google OAuth, Facebook)
+- **🎯 Daily Access System:** Smart daily limits with free re-access
+- **👥 Role-Based Access:** User, Editor, Admin permissions
+- **📊 Interactive API:** Swagger documentation with live testing
+- **📱 Responsive Design:** Mobile-first Tailwind CSS interface
 
 ### **Key URLs**
 - **Frontend:** http://localhost:3000
@@ -37,134 +41,187 @@ The **Astronacci Social Media Platform** is a content management and consumption
 
 ---
 
+## 🎯 Daily Content Access System
+
+### **🔄 Revolutionary Daily Limits**
+
+The platform implements a **daily content access system** that fundamentally changes how users interact with content:
+
+#### **Content Discovery (Unlimited)**
+- ✅ **All users see ALL content** in listing pages
+- ✅ **Full search and filtering** capabilities
+- ✅ **Complete metadata access** (titles, excerpts, thumbnails)
+- ✅ **No browsing restrictions** whatsoever
+
+#### **Content Consumption (Daily Limited)**
+- 📖 **Article Detail Access:** Counts against daily limit
+- 🎥 **Video Detail Access:** Counts against daily limit
+- 🔄 **Smart Re-access:** Revisiting content is FREE
+- 🌙 **Midnight Reset:** Fresh limits every day
+
+### **Membership Tiers & Daily Limits**
+
+| Tier | Daily Articles | Daily Videos | Price | Benefits |
+|------|---------------|--------------|-------|----------|
+| **TYPE_A** | 3 | 3 | Free | Basic daily access |
+| **TYPE_B** | 10 | 10 | $9.99/month | Enhanced daily access |
+| **TYPE_C** | Unlimited | Unlimited | $19.99/month | Complete freedom |
+
+### **Smart Access Features**
+1. **📅 Daily Reset**: Fresh opportunities every day at midnight
+2. **🔄 Re-access Protection**: View consumed content without penalty
+3. **📊 Usage Tracking**: Real-time progress indicators
+4. **🎯 Strategic Choice**: Users decide what to consume
+5. **📈 Engagement Driven**: Encourages daily platform visits
+
+---
+
 ## 👥 User Types & Roles
 
 ### **Authentication Roles**
-- **🔓 Guest:** Browse public content only
-- **👤 User:** Registered members with content consumption limits
-- **✏️ Editor:** Can create and edit content
-- **👑 Admin:** Full platform management access
+- **🔓 Guest:** Browse ALL content listings, limited detail access
+- **👤 User:** Daily content access based on membership tier
+- **✏️ Editor:** Content creation + user privileges
+- **� Admin:** Complete platform management
 
 ### **Authentication Methods**
-- **📧 Email/Password:** Traditional registration and login
-- **🔐 Google OAuth:** Social login with automatic account linking
-- **📘 Facebook OAuth:** Alternative social login option
-- **🔗 Account Linking:** Seamless integration between local and OAuth accounts
-
-### **Membership Tiers**
-- **TYPE_A:** 3 articles, 3 videos
-- **TYPE_B:** 10 articles, 10 videos  
-- **TYPE_C:** Unlimited access
+- **📧 Email/Password:** Traditional secure registration
+- **🔐 Google OAuth:** Seamless social login with account linking
+- **📘 Facebook OAuth:** Alternative social authentication
+- **🔗 Smart Linking:** Automatic account merging for existing emails
 
 ---
 
 ## 🔍 Guest User Journey
 
-### **Entry Points**
-1. **Direct URL Access:** http://localhost:3000
-2. **Search Engine:** Landing on article pages
-3. **Social Media:** Shared content links
-
-### **Guest Experience Flow**
+### **New Guest Experience Flow**
 
 ```mermaid
 graph TD
-    A[Visit Platform] --> B[Browse Homepage]
-    B --> C[View Article List]
-    C --> D[Read Public Articles]
-    C --> E[Watch Public Videos]
-    D --> F[See Login Prompt for More]
-    E --> F
-    F --> G[Click Login Button]
-    G --> H[Google OAuth]
-    H --> I[Become Registered User]
+    A[Visit Platform] --> B[See ALL Articles & Videos]
+    B --> C[Browse Complete Catalog]
+    C --> D[Click Article/Video]
+    D --> E[Registration Required]
+    E --> F[Choose Auth Method]
+    F --> G[Google OAuth] 
+    F --> H[Email/Password]
+    F --> I[Facebook OAuth]
+    G --> J[Instant Access to Content]
+    H --> J
+    I --> J
+    J --> K[Daily Limits Applied]
 ```
 
-### **Available Actions**
+### **Enhanced Guest Capabilities**
 ✅ **Can Do:**
-- Browse article listings
-- Read article excerpts
-- View public video previews
-- Access platform navigation
-- See registration prompts
+- **See ALL content listings** (complete catalog visibility)
+- **Browse without restrictions** (search, filter, paginate)
+- **View rich metadata** (titles, excerpts, thumbnails, tags)
+- **Access platform navigation** and features
+- **Understand membership benefits** clearly
 
 ❌ **Cannot Do:**
-- Read full articles
-- Watch complete videos
-- Access dashboard
-- Create content
-- Save favorites
+- Access article/video detail pages
+- Consume full content
+- Track daily usage
+- Save content preferences
 
-### **Conversion Touchpoints**
-1. **Article Paywall:** After reading excerpt
-2. **Video Preview End:** Call-to-action to register
+### **Conversion Strategy**
+1. **Full Visibility Hook:** Users see everything available
+2. **Strategic FOMO:** "Choose wisely with your daily limits"
+3. **Clear Value Prop:** Immediate access after registration
+4. **Multiple Entry Points:** Every piece of content is a conversion opportunity
 3. **Navigation Bar:** Prominent login button
 4. **Footer:** Registration benefits
 
 ---
 
-## 👤 Regular User Journey
+## 👤 Regular User Journey - Daily Access System
 
-### **Onboarding Process**
+### **🔐 Registration & Onboarding**
 
-#### **Step 1: Registration Options**
+#### **Registration Process**
+```mermaid
+graph LR
+    A[Choose Auth Method] --> B[Email/Password]
+    A --> C[Google OAuth]
+    A --> D[Facebook OAuth]
+    B --> E[Email Verification]
+    C --> F[OAuth Success]
+    D --> F
+    E --> G[Select Membership Tier]
+    F --> G
+    G --> H[Welcome Dashboard]
+    H --> I[Daily Limits Explained]
+```
 
-Users can register through multiple methods:
+#### **Step 1: Multi-Method Registration**
 
 **Option A: Email/Password Registration**
-1. **Click "Login"** on any page
-2. **Toggle to "Create Account"** mode
-3. **Fill Registration Form:**
+1. **Visit Login Page** → Click "Create Account"
+2. **Complete Registration Form:**
    - Full name (required)
-   - Email address (required, validated)
-   - Password (required, minimum 6 characters)
-   - Confirm password (must match)
-4. **Submit Form** → Instant account creation
-5. **Automatic Login** with JWT token
+   - Email address (unique, validated)
+   - Password (minimum 6 characters, hashed with bcrypt)
+   - Membership tier selection (defaults to TYPE_A)
+3. **Instant Account Creation** with JWT token
+4. **Welcome Tutorial** explaining daily access system
 
 **Option B: Google OAuth Registration**
-1. **Click "Login"** on any page
-2. **Click "Continue with Google"** button
-3. **Google OAuth Flow:**
-   ```
-   Platform → Google → Authorization → Account Creation → Redirect
-   ```
-4. **Account Linking Check:**
-   - If email exists: Links to existing local account
-   - If new email: Creates new account with Google profile data
+1. **Click "Continue with Google"**
+2. **Google OAuth Flow** with automatic account linking
+3. **Profile Data Import** (name, email, avatar)
+4. **Daily Limits Setup** with tier selection
 
 **Option C: Facebook OAuth Registration**
-1. **Click "Login"** on any page
-2. **Click "Continue with Facebook"** button
-3. **Facebook OAuth Flow** (similar to Google)
+1. **Click "Continue with Facebook"**
+2. **Facebook OAuth Flow** with seamless integration
+3. **Automatic Profile Creation**
+4. **Daily Access System Introduction**
 
-#### **Step 2: Login Process**
+#### **Step 2: Daily Access System Onboarding**
 
-**Email/Password Login:**
-1. **Enter credentials** in login form
-2. **Backend validation:**
-   - Email format check
-   - Password verification with bcrypt
-   - Account status validation
-3. **JWT token generation** on success
-4. **Redirect to dashboard** with user session
+**Welcome Tutorial Shows:**
+- 🎯 **Daily Limits Concept:** "Access content strategically with daily limits"
+- 🔄 **Re-access Benefits:** "Revisit content from today without using limits"
+- 📅 **Reset Schedule:** "Fresh limits every day at midnight"
+- 📊 **Usage Tracking:** "Monitor your daily consumption in real-time"
 
-**OAuth Login:**
-1. **OAuth provider authentication**
-2. **Account linking logic:**
-   - Existing local account: Links OAuth profile
-   - New user: Creates account with OAuth data
-3. **JWT token generation** and redirect
+**Initial Dashboard Setup:**
+- 📈 **Daily Counters:** 0/3 articles, 0/3 videos (TYPE_A)
+- 📚 **Full Catalog Access:** Browse all content immediately
+- 🎯 **Strategic Tips:** Content selection guidance
+- ⏰ **Reset Timer:** Next limit refresh countdown
 
-#### **Step 3: Profile Creation & Setup**
-1. **Welcome Dashboard** shows:
-   - User profile (name, email, avatar)
-   - Default membership: TYPE_A (3 articles, 3 videos)
-   - Default role: user
-   - Content limits and usage tracking
+### **🌅 Daily User Experience**
 
-2. **Platform Exploration:**
-   - Browse full article library
+#### **Login & Daily Status Dashboard**
+```mermaid
+graph TD
+    A[User Logs In] --> B[Daily Status Check]
+    B --> C[Display Usage: 2/3 Articles]
+    B --> D[Display Usage: 1/3 Videos]
+    B --> E[Show Re-access List]
+    C --> F[Browse All Content]
+    D --> F
+    E --> F
+    F --> G[Strategic Content Selection]
+```
+
+**Dashboard Elements:**
+- 📊 **Usage Counters:** Real-time daily consumption tracking
+- 📈 **Progress Bars:** Visual representation of limit usage
+- 🔄 **Re-access Panel:** Content available for free revisit
+- ⏰ **Reset Timer:** "Fresh limits in 8 hours 23 minutes"
+- 📱 **Mobile Optimized:** Full functionality across devices
+
+#### **Enhanced Content Discovery (Unlimited)**
+✅ **Always Available:**
+- 📚 **Complete Article Library:** See every published article
+- 🎥 **Full Video Catalog:** Browse all available videos
+- 🔍 **Advanced Search:** Filter by tags, categories, dates, authors
+- 📖 **Rich Metadata:** Titles, excerpts, thumbnails, reading time
+- 📱 **Responsive Browsing:** Seamless mobile and desktop experience
    - Access video content
    - Use search functionality
 

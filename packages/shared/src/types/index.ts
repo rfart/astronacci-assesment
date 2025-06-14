@@ -37,6 +37,13 @@ export interface User {
   socialId?: string;
   articlesRead: number;
   videosWatched: number;
+  dailyArticlesAccessed: number;
+  dailyVideosAccessed: number;
+  lastAccessDate: Date;
+  accessedContentToday: {
+    articles: string[];
+    videos: string[];
+  };
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

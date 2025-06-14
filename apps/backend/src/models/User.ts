@@ -1,11 +1,34 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { User as IUser, MembershipTier, UserRole } from '@astronacci/shared';
+import { MembershipTier, UserRole } from '@astronacci/shared';
 
-interface UserDocument extends Omit<IUser, '_id'>, Document {
-  role: UserRole;
+interface UserDocument extends Document {
+  email: string;
+  name: string;
   password?: string;
+  avatar?: string;
+  membershipTier: MembershipTier;
+  role: UserRole;
+  socialProvider: 'google' | 'facebook' | 'local';
+  socialId?: string;
+  articlesRead: number;
+  videosWatched: number;
+  dailyArticlesAccessed: number;
+  dailyVideosAccessed: number;
+  lastAccessDate: Date;
+  accessedContentToday: {
+    articles: string[];
+    videos: string[];
+  };
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  canAccessContent(contentType: 'article' | 'video'): boolean;
+  incrementUsage(contentType: 'article' | 'video'): Promise<void>;
+  checkAndResetDailyLimit(): void;
+  canAccessContentDetail(contentType: 'article' | 'video', contentId: string): { canAccess: boolean, reason?: string };
+  recordContentAccess(contentType: 'article' | 'video', contentId: string): Promise<void>;
 }
 
 const userSchema = new Schema<UserDocument>({
@@ -63,6 +86,28 @@ const userSchema = new Schema<UserDocument>({
     default: 0,
     min: 0
   },
+  dailyArticlesAccessed: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  dailyVideosAccessed: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  lastAccessDate: {
+    type: Date,
+    default: Date.now
+  },
+  accessedContentToday: {
+    articles: [{
+      type: String
+    }],
+    videos: [{
+      type: String
+    }]
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -115,9 +160,9 @@ userSchema.methods.canAccessContent = function(contentType: 'article' | 'video')
   const limit = limits[this.membershipTier as MembershipTier];
   
   if (contentType === 'article') {
-    return limit.articles === -1 || this.articlesRead < limit.articles;
+    return limit.articles === -1 || this.dailyArticlesAccessed < limit.articles;
   } else {
-    return limit.videos === -1 || this.videosWatched < limit.videos;
+    return limit.videos === -1 || this.dailyVideosAccessed < limit.videos;
   }
 };
 
@@ -128,6 +173,93 @@ userSchema.methods.incrementUsage = async function(contentType: 'article' | 'vid
     this.videosWatched += 1;
   }
   await this.save();
+};
+
+userSchema.methods.checkAndResetDailyLimit = function(): void {
+  const now = new Date();
+  const lastAccess = new Date(this.lastAccessDate);
+  
+  // Check if it's a new day (reset at midnight)
+  const isNewDay = now.toDateString() !== lastAccess.toDateString();
+  
+  if (isNewDay) {
+    this.dailyArticlesAccessed = 0;
+    this.dailyVideosAccessed = 0;
+    this.accessedContentToday = { articles: [], videos: [] };
+    this.lastAccessDate = now;
+  }
+};
+
+userSchema.methods.canAccessContentDetail = function(contentType: 'article' | 'video', contentId: string): { canAccess: boolean, reason?: string } {
+  // Reset daily limits if it's a new day
+  this.checkAndResetDailyLimit();
+  
+  const limits = {
+    [MembershipTier.TYPE_A]: { articles: 3, videos: 3 },
+    [MembershipTier.TYPE_B]: { articles: 10, videos: 10 },
+    [MembershipTier.TYPE_C]: { articles: -1, videos: -1 } // unlimited
+  };
+
+  const limit = limits[this.membershipTier as MembershipTier];
+  
+  // Check if user has already accessed this content today (free re-access)
+  const accessedToday = contentType === 'article' 
+    ? this.accessedContentToday.articles.includes(contentId)
+    : this.accessedContentToday.videos.includes(contentId);
+  
+  if (accessedToday) {
+    return { canAccess: true };
+  }
+  
+  // Check daily limit
+  if (contentType === 'article') {
+    if (limit.articles === -1) {
+      return { canAccess: true };
+    }
+    if (this.dailyArticlesAccessed >= limit.articles) {
+      return { 
+        canAccess: false, 
+        reason: `Daily article limit reached (${limit.articles}/${limit.articles}). Try again tomorrow or upgrade your membership.`
+      };
+    }
+  } else {
+    if (limit.videos === -1) {
+      return { canAccess: true };
+    }
+    if (this.dailyVideosAccessed >= limit.videos) {
+      return { 
+        canAccess: false, 
+        reason: `Daily video limit reached (${limit.videos}/${limit.videos}). Try again tomorrow or upgrade your membership.`
+      };
+    }
+  }
+  
+  return { canAccess: true };
+};
+
+userSchema.methods.recordContentAccess = async function(contentType: 'article' | 'video', contentId: string): Promise<void> {
+  // Reset daily limits if it's a new day
+  this.checkAndResetDailyLimit();
+  
+  // Check if already accessed today
+  const accessedToday = contentType === 'article' 
+    ? this.accessedContentToday.articles.includes(contentId)
+    : this.accessedContentToday.videos.includes(contentId);
+  
+  if (!accessedToday) {
+    // Add to accessed content list
+    if (contentType === 'article') {
+      this.accessedContentToday.articles.push(contentId);
+      this.dailyArticlesAccessed += 1;
+      this.articlesRead += 1; // Keep total count for backward compatibility
+    } else {
+      this.accessedContentToday.videos.push(contentId);
+      this.dailyVideosAccessed += 1;
+      this.videosWatched += 1; // Keep total count for backward compatibility
+    }
+    
+    await this.save();
+  }
 };
 
 export const User = mongoose.model<UserDocument>('User', userSchema);

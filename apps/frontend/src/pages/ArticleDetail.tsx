@@ -47,7 +47,11 @@ const ArticleDetail: React.FC = () => {
         setArticle(articleData);
       } catch (error: any) {
         console.error('Failed to fetch article:', error);
-        setError(error.response?.data?.message ?? 'Failed to load article');
+        if (error.response?.data?.code === 'DAILY_LIMIT_REACHED') {
+          setError(error.response.data.message);
+        } else {
+          setError(error.response?.data?.message ?? 'Failed to load article');
+        }
       } finally {
         setLoading(false);
       }
@@ -71,7 +75,9 @@ const ArticleDetail: React.FC = () => {
           <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">Article not found</h3>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">
+            {error?.includes('Daily') ? 'Daily Limit Reached' : 'Article not found'}
+          </h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
             <Link

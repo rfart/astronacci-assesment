@@ -32,12 +32,11 @@ export interface VideosResponse {
     total: number;
     pages: number;
   };
-  membershipLimit?: {
-    hasReachedLimit: boolean;
-    limit: number;
-    used: number;
-    totalAvailable: number;
-    hasMoreContent?: boolean;
+  membershipStatus?: {
+    tier: string;
+    dailyLimit: number | 'unlimited';
+    dailyUsed: number;
+    dailyRemaining: number | 'unlimited';
     message: string;
   };
   message?: string;

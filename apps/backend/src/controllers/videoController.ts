@@ -26,46 +26,7 @@ export class VideoController {
     return query;
   }
 
-  // Helper method to calculate membership limits
-  private calculateMembershipLimits(user: any, totalAvailable: number, page: number, limit: number) {
-    if (!user || user.role === 'admin') {
-      return { effectiveLimit: limit, hasMoreContent: false, membershipMessage: null };
-    }
-
-    const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-    const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
-    
-    if (membershipLimit === -1) {
-      return { effectiveLimit: limit, hasMoreContent: false, membershipMessage: null };
-    }
-
-    // For listing, limit the number of videos they can see based on their tier
-    const requestedStart = (page - 1) * limit;
-    
-    // If requesting beyond their membership limit
-    if (requestedStart >= membershipLimit) {
-      return { 
-        effectiveLimit: 0, 
-        hasReachedLimit: true,
-        membershipLimit,
-        used: user.videosWatched,
-        totalAvailable 
-      };
-    }
-    
-    // Calculate how many videos they can see on this page
-    const remainingInLimit = membershipLimit - requestedStart;
-    const effectiveLimit = Math.min(limit, remainingInLimit);
-    
-    const hasMoreContent = totalAvailable > membershipLimit;
-    const membershipMessage = hasMoreContent 
-      ? `You can access ${membershipLimit} videos with ${userMembership} membership. More videos available with upgrade.`
-      : null;
-    
-    return { effectiveLimit, hasMoreContent, membershipMessage, membershipLimit, used: user.videosWatched };
-  }
-
-  // Get all videos with membership filtering
+  // Get all videos - no membership filtering on listings
   public getVideos = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
@@ -74,41 +35,11 @@ export class VideoController {
       const query = this.buildQuery(category as string, search as string);
       const totalAvailable = await Video.countDocuments(query);
       
-      const limitResult = this.calculateMembershipLimits(user, totalAvailable, Number(page), Number(limit));
-      
-      // Handle case where user has reached limit
-      if ('hasReachedLimit' in limitResult) {
-        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-        res.json({
-          success: true,
-          data: [],
-          pagination: { page: Number(page), limit: Number(limit), total: 0, pages: 0 },
-          membershipLimit: {
-            hasReachedLimit: true,
-            limit: limitResult.membershipLimit,
-            used: limitResult.used,
-            totalAvailable: limitResult.totalAvailable,
-            message: `You have reached your ${limitResult.membershipLimit}-video limit for ${userMembership} membership. Upgrade to access more content.`
-          }
-        });
-        return;
-      }
-
       const skip = (Number(page) - 1) * Number(limit);
       const videos = await Video.find(query)
         .sort({ publishedAt: -1 })
         .skip(skip)
-        .limit(limitResult.effectiveLimit);
-
-      // Calculate pagination total
-      let paginationTotal = totalAvailable;
-      if (user && user.role !== 'admin') {
-        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-        const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
-        if (membershipLimit !== -1) {
-          paginationTotal = Math.min(totalAvailable, membershipLimit);
-        }
-      }
+        .limit(Number(limit));
 
       const response: any = {
         success: true,
@@ -116,23 +47,28 @@ export class VideoController {
         pagination: {
           page: Number(page),
           limit: Number(limit),
-          total: paginationTotal,
-          pages: Math.ceil(paginationTotal / Number(limit)),
+          total: totalAvailable,
+          pages: Math.ceil(totalAvailable / Number(limit)),
         },
       };
 
-      // Add membership info if needed
-      if (user && user.role !== 'admin' && (limitResult.hasMoreContent || limitResult.membershipMessage)) {
-        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-        const membershipLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+      // Add membership status info for frontend display
+      if (user && user.role !== 'admin') {
+        // Reset daily limits if it's a new day
+        user.checkAndResetDailyLimit();
+        await user.save();
         
-        response.membershipLimit = {
-          hasReachedLimit: false,
-          limit: membershipLimit,
-          used: user.videosWatched,
-          totalAvailable,
-          hasMoreContent: limitResult.hasMoreContent,
-          message: limitResult.membershipMessage
+        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+        const dailyLimit = MEMBERSHIP_LIMITS[userMembership].videos;
+        
+        response.membershipStatus = {
+          tier: userMembership,
+          dailyLimit: dailyLimit === -1 ? 'unlimited' : dailyLimit,
+          dailyUsed: user.dailyVideosAccessed,
+          dailyRemaining: dailyLimit === -1 ? 'unlimited' : Math.max(0, dailyLimit - user.dailyVideosAccessed),
+          message: dailyLimit === -1 
+            ? 'Unlimited video access' 
+            : `${user.dailyVideosAccessed}/${dailyLimit} daily videos accessed`
         };
       }
 
@@ -142,7 +78,7 @@ export class VideoController {
     }
   };
 
-  // Get single video
+  // Get single video with daily limit checking
   public getVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -158,23 +94,21 @@ export class VideoController {
         return;
       }
 
-      // Check membership access
-      if (user) {
-        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-        const limit = MEMBERSHIP_LIMITS[userMembership].videos;
+      // Check daily access limit for non-admin users
+      if (user && user.role !== 'admin') {
+        const accessCheck = user.canAccessContentDetail('video', id);
         
-        if (limit !== -1 && user.videosWatched >= limit) {
+        if (!accessCheck.canAccess) {
           res.status(403).json({
             success: false,
-            message: 'Membership limit reached. Please upgrade your membership.',
+            message: accessCheck.reason,
+            code: 'DAILY_LIMIT_REACHED'
           });
           return;
         }
 
-        // Increment user's videos watched count if they can access content
-        if (user.canAccessContent?.('video')) {
-          await user.incrementUsage('video');
-        }
+        // Record the access (only counts if it's the first time today)
+        await user.recordContentAccess('video', id);
       }
 
       res.json({

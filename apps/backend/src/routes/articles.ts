@@ -99,7 +99,7 @@ router.get('/', optionalAuthenticateToken, articleController.getArticles);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', articleController.getArticle);
+router.get('/:id', optionalAuthenticateToken, articleController.getArticle);
 
 /**
  * @swagger

@@ -78,7 +78,7 @@ router.get('/', optionalAuthenticateToken, videoController.getVideos);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', videoController.getVideo);
+router.get('/:id', optionalAuthenticateToken, videoController.getVideo);
 
 /**
  * @swagger

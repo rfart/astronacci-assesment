@@ -10,7 +10,7 @@ const Videos: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [membershipLimit, setMembershipLimit] = useState<any>(null);
+  const [membershipStatus, setMembershipStatus] = useState<any>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -32,7 +32,7 @@ const Videos: React.FC = () => {
       });
       setVideos(response.data);
       setTotalPages(response.pagination.pages);
-      setMembershipLimit(response.membershipLimit || null);
+      setMembershipStatus(response.membershipStatus || null);
     } catch (error) {
       console.error('Failed to fetch videos:', error);
     } finally {
@@ -94,62 +94,34 @@ const Videos: React.FC = () => {
         </div>
       )}
 
-      {/* Membership Limit Warning */}
-      {!loading && membershipLimit && (
-        <div className={`mb-6 p-4 rounded-lg ${
-          membershipLimit.hasReachedLimit 
-            ? 'bg-red-50 border border-red-200' 
-            : 'bg-yellow-50 border border-yellow-200'
-        }`}>
+      {/* Membership Status Info */}
+      {!loading && membershipStatus && (
+        <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
           <div className="flex">
             <div className="flex-shrink-0">
-              {membershipLimit.hasReachedLimit ? (
-                <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              ) : (
-                <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              )}
+              <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
             </div>
             <div className="ml-3">
-              <h3 className={`text-sm font-medium ${
-                membershipLimit.hasReachedLimit ? 'text-red-800' : 'text-yellow-800'
-              }`}>
-                {membershipLimit.hasReachedLimit ? 'Content Limit Reached' : 'Limited Access'}
+              <h3 className="text-sm font-medium text-blue-800">
+                Membership Status - {membershipStatus.tier}
               </h3>
-              <div className={`mt-2 text-sm ${
-                membershipLimit.hasReachedLimit ? 'text-red-700' : 'text-yellow-700'
-              }`}>
-                <p>{membershipLimit.message}</p>
-                {!membershipLimit.hasReachedLimit && (
+              <div className="mt-2 text-sm text-blue-700">
+                <p>{membershipStatus.message}</p>
+                {membershipStatus.dailyLimit !== 'unlimited' && (
                   <div className="mt-2">
-                    <div className={`w-full bg-gray-200 rounded-full h-2`}>
+                    <div className="bg-blue-200 rounded-full h-2 mb-1">
                       <div 
-                        className={`h-2 rounded-full ${
-                          membershipLimit.used >= membershipLimit.limit ? 'bg-red-500' : 'bg-yellow-500'
-                        }`}
-                        style={{ width: `${Math.min((membershipLimit.used / membershipLimit.limit) * 100, 100)}%` }}
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min((membershipStatus.dailyUsed / membershipStatus.dailyLimit) * 100, 100)}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs mt-1">
-                      {membershipLimit.used}/{membershipLimit.limit} videos accessed
+                    <p className="text-xs">
+                      {membershipStatus.dailyUsed}/{membershipStatus.dailyLimit} daily videos accessed
                     </p>
                   </div>
                 )}
-              </div>
-              <div className="mt-3">
-                <button
-                  onClick={() => window.location.href = '/profile'}
-                  className={`text-sm font-medium ${
-                    membershipLimit.hasReachedLimit 
-                      ? 'text-red-700 hover:text-red-600' 
-                      : 'text-yellow-700 hover:text-yellow-600'
-                  } underline`}
-                >
-                  Upgrade Membership →
-                </button>
               </div>
             </div>
           </div>
@@ -157,7 +129,7 @@ const Videos: React.FC = () => {
       )}
 
       {/* No results */}
-      {!loading && videos.length === 0 && !membershipLimit?.hasReachedLimit && (
+      {!loading && videos.length === 0 && (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -165,19 +137,6 @@ const Videos: React.FC = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">No videos found</h3>
           <p className="mt-1 text-sm text-gray-500">
             {search ? 'Try adjusting your search terms.' : 'No videos have been published yet.'}
-          </p>
-        </div>
-      )}
-
-      {/* Membership Limit Reached - Show Empty State */}
-      {!loading && videos.length === 0 && membershipLimit?.hasReachedLimit && (
-        <div className="text-center py-12">
-          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Content Access Restricted</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            You've reached your video limit. Upgrade your membership to access more content.
           </p>
         </div>
       )}
