@@ -1,7 +1,6 @@
 import React from 'react';
 
 interface Props {
-  cmsStats: any;
   canCreateArticles: boolean;
   userStats: any;
   statsLoading: boolean;
@@ -13,7 +12,6 @@ interface Props {
 }
 
 const CreateContent: React.FC<Props> = ({
-  cmsStats,
   canCreateArticles,
   userStats,
   statsLoading,
@@ -25,27 +23,6 @@ const CreateContent: React.FC<Props> = ({
 }) => {
   return (
     <>
-      {/* CMS Stats */}
-      {cmsStats && (
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded shadow border">
-            <div className="text-xs text-gray-500">Total Articles</div>
-            <div className="text-xl font-bold">{cmsStats.statistics.totalArticles}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border">
-            <div className="text-xs text-gray-500">Total Videos</div>
-            <div className="text-xl font-bold">{cmsStats.statistics.totalVideos}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border">
-            <div className="text-xs text-gray-500">Total Users</div>
-            <div className="text-xl font-bold">{cmsStats.statistics.totalUsers}</div>
-          </div>
-          <div className="bg-white p-4 rounded shadow border">
-            <div className="text-xs text-gray-500">Total Categories</div>
-            <div className="text-xl font-bold">{cmsStats.statistics.totalCategories}</div>
-          </div>
-        </div>
-      )}
       {/* Content Creation Form and User Stats */}
       {canCreateArticles && (
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -183,4 +160,6 @@ const CreateContent: React.FC<Props> = ({
   );
 };
 
-export default CreateContent;
+// Rename the component and export as CreateArticle
+const CreateArticle = CreateContent;
+export default CreateArticle;

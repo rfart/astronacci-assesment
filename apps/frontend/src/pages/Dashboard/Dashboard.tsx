@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
 import { userService, UserStats } from '../../services/userService';
-import CreateContent from './components/CreateContent';
+import CreateArticle from './components/CreateArticle';
+import CreateVideo from './components/CreateVideo';
 import ContentAnalytics from './components/ContentAnalytics';
 import UserManagement from './components/UserManagement';
 
@@ -49,7 +50,8 @@ interface UserList {
 }
 
 const TABS = [
-  { key: 'create', label: 'Create Content' },
+  { key: 'create-article', label: 'Create Article' },
+  { key: 'create-video', label: 'Create Video' },
   { key: 'analytics', label: 'Content Analytics' },
   { key: 'users', label: 'User Management', adminOnly: true },
 ];
@@ -72,7 +74,7 @@ const Dashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<ContentAnalytics | null>(null);
   const [users, setUsers] = useState<UserList[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState('create-article');
 
   // Check if user has permission to create articles
   const canCreateArticles = user?.role === 'admin' || user?.role === 'editor';
@@ -211,9 +213,30 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
+      {/* CMS Stats - always visible at the top */}
+      {cmsStats && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded shadow border">
+            <div className="text-xs text-gray-500">Total Articles</div>
+            <div className="text-xl font-bold">{cmsStats.statistics.totalArticles}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow border">
+            <div className="text-xs text-gray-500">Total Videos</div>
+            <div className="text-xl font-bold">{cmsStats.statistics.totalVideos}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow border">
+            <div className="text-xs text-gray-500">Total Users</div>
+            <div className="text-xl font-bold">{cmsStats.statistics.totalUsers}</div>
+          </div>
+          <div className="bg-white p-4 rounded shadow border">
+            <div className="text-xs text-gray-500">Total Categories</div>
+            <div className="text-xl font-bold">{cmsStats.statistics.totalCategories}</div>
+          </div>
+        </div>
+      )}
       {/* Navigation Tabs */}
       <div className="mb-6 flex gap-2 border-b">
-        {TABS.filter(tab => !tab.adminOnly || user?.role === 'admin').map(tab => (
+        {TABS.filter(tab => !tab.adminOnly || user?.role === 'admin').map((tab) => (
           <button
             key={tab.key}
             className={`px-4 py-2 -mb-px border-b-2 font-medium transition-colors ${
@@ -229,15 +252,23 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'create' && (
-        <CreateContent
-          cmsStats={cmsStats}
+      {activeTab === 'create-article' && (
+        <CreateArticle
           canCreateArticles={canCreateArticles}
           userStats={userStats}
           statsLoading={statsLoading}
           message={message}
           form={form}
           loading={loading}
+          handleChange={handleChange}
+          handleSubmit={handleSubmit}
+        />
+      )}
+      {activeTab === 'create-video' && (
+        <CreateVideo
+          form={form}
+          loading={loading}
+          message={message}
           handleChange={handleChange}
           handleSubmit={handleSubmit}
         />
