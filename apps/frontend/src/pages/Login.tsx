@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { authService } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
+
+interface LoginForm {
+  email: string;
+  password: string;
+}
+
+interface RegisterForm {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const Login: React.FC = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [loginForm, setLoginForm] = useState<LoginForm>({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState<RegisterForm>({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
+  
+  const { login: authLogin } = useAuth();
+
   const handleGoogleLogin = () => {
     window.location.href = authService.getGoogleAuthUrl();
   };
@@ -10,18 +36,185 @@ const Login: React.FC = () => {
     window.location.href = authService.getFacebookAuthUrl();
   };
 
+  const handleLocalLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await authService.login(loginForm.email, loginForm.password);
+      authLogin(response.data.token);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLocalRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await authService.register(
+        registerForm.name,
+        registerForm.email,
+        registerForm.password
+      );
+      authLogin(response.data.token);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            {isLogin ? 'Sign in to your account' : 'Create your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Choose your preferred login method
+            {isLogin ? 'Welcome back! Please sign in.' : 'Join us and start exploring content.'}
           </p>
         </div>
         
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        {/* Email/Password Form */}
+        <form onSubmit={isLogin ? handleLocalLogin : handleLocalRegister} className="space-y-6">
+          {!isLogin && (
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required={!isLogin}
+                value={registerForm.name}
+                onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="John Doe"
+              />
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              value={isLogin ? loginForm.email : registerForm.email}
+              onChange={(e) => {
+                if (isLogin) {
+                  setLoginForm(prev => ({ ...prev, email: e.target.value }));
+                } else {
+                  setRegisterForm(prev => ({ ...prev, email: e.target.value }));
+                }
+              }}
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={6}
+              value={isLogin ? loginForm.password : registerForm.password}
+              onChange={(e) => {
+                if (isLogin) {
+                  setLoginForm(prev => ({ ...prev, password: e.target.value }));
+                } else {
+                  setRegisterForm(prev => ({ ...prev, password: e.target.value }));
+                }
+              }}
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {!isLogin && (
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required={!isLogin}
+                minLength={6}
+                value={registerForm.confirmPassword}
+                onChange={(e) => setRegisterForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Confirm your password"
+              />
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
+          </div>
+        </form>
+
+        {/* Toggle Login/Register */}
+        <div className="text-center">
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError('');
+              setLoginForm({ email: '', password: '' });
+              setRegisterForm({ name: '', email: '', password: '', confirmPassword: '' });
+            }}
+            className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+          >
+            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+          </div>
+        </div>
+        
+        {/* OAuth Buttons */}
         <div className="space-y-4">
           <button
             onClick={handleGoogleLogin}
@@ -61,7 +254,7 @@ const Login: React.FC = () => {
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            By signing {isLogin ? 'in' : 'up'}, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
       </div>

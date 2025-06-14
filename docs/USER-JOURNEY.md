@@ -45,6 +45,12 @@ The **Astronacci Social Media Platform** is a content management and consumption
 - **✏️ Editor:** Can create and edit content
 - **👑 Admin:** Full platform management access
 
+### **Authentication Methods**
+- **📧 Email/Password:** Traditional registration and login
+- **🔐 Google OAuth:** Social login with automatic account linking
+- **📘 Facebook OAuth:** Alternative social login option
+- **🔗 Account Linking:** Seamless integration between local and OAuth accounts
+
 ### **Membership Tiers**
 - **TYPE_A:** 3 articles, 3 videos
 - **TYPE_B:** 10 articles, 10 videos  
@@ -101,22 +107,61 @@ graph TD
 
 ### **Onboarding Process**
 
-#### **Step 1: Registration**
+#### **Step 1: Registration Options**
+
+Users can register through multiple methods:
+
+**Option A: Email/Password Registration**
 1. **Click "Login"** on any page
-2. **Google OAuth Flow:**
+2. **Toggle to "Create Account"** mode
+3. **Fill Registration Form:**
+   - Full name (required)
+   - Email address (required, validated)
+   - Password (required, minimum 6 characters)
+   - Confirm password (must match)
+4. **Submit Form** → Instant account creation
+5. **Automatic Login** with JWT token
+
+**Option B: Google OAuth Registration**
+1. **Click "Login"** on any page
+2. **Click "Continue with Google"** button
+3. **Google OAuth Flow:**
    ```
-   Platform → Google → Authorization → Redirect → Profile Creation
+   Platform → Google → Authorization → Account Creation → Redirect
    ```
-3. **Profile Setup:**
-   - Auto-populated from Google (name, email, avatar)
+4. **Account Linking Check:**
+   - If email exists: Links to existing local account
+   - If new email: Creates new account with Google profile data
+
+**Option C: Facebook OAuth Registration**
+1. **Click "Login"** on any page
+2. **Click "Continue with Facebook"** button
+3. **Facebook OAuth Flow** (similar to Google)
+
+#### **Step 2: Login Process**
+
+**Email/Password Login:**
+1. **Enter credentials** in login form
+2. **Backend validation:**
+   - Email format check
+   - Password verification with bcrypt
+   - Account status validation
+3. **JWT token generation** on success
+4. **Redirect to dashboard** with user session
+
+**OAuth Login:**
+1. **OAuth provider authentication**
+2. **Account linking logic:**
+   - Existing local account: Links OAuth profile
+   - New user: Creates account with OAuth data
+3. **JWT token generation** and redirect
+
+#### **Step 3: Profile Creation & Setup**
+1. **Welcome Dashboard** shows:
+   - User profile (name, email, avatar)
    - Default membership: TYPE_A (3 articles, 3 videos)
    - Default role: user
-
-#### **Step 2: First Session**
-1. **Welcome Dashboard** shows:
-   - Membership tier (TYPE_A)
-   - Content limits (3/3 articles, 3/3 videos)
-   - Personalized recommendations
+   - Content limits and usage tracking
 
 2. **Platform Exploration:**
    - Browse full article library
@@ -275,17 +320,30 @@ sequenceDiagram
     participant G as Google OAuth
     participant DB as Database
 
-    U->>F: Click Login
+    Note over U,DB: Email/Password Registration
+    U->>F: Fill Registration Form
+    F->>B: POST /api/auth/register
+    B->>B: Validate & Hash Password
+    B->>DB: Create User Account
+    B->>F: JWT Token + User Data
+    F->>U: Logged In Dashboard
+
+    Note over U,DB: Google OAuth with Account Linking
+    U->>F: Click "Continue with Google"
     F->>B: Redirect to /auth/google
     B->>G: OAuth Authorization
     G->>U: Google Login Page
     U->>G: Enter Credentials
-    G->>B: Authorization Code
-    B->>G: Exchange for Access Token
-    G->>B: User Profile Data
-    B->>DB: Create/Update User
-    B->>F: JWT Token + User Data
-    F->>U: Logged In Dashboard
+    G->>B: Authorization Code + Profile
+    B->>DB: Check for Existing Email
+    alt Email Exists (Account Linking)
+        B->>DB: Link Google ID to Local Account
+        Note right of B: Maintains local auth as primary
+    else New Email
+        B->>DB: Create New Account with Google Data
+    end
+    B->>F: JWT Token + Linked Status
+    F->>U: Dashboard with Linking Notification
 ```
 
 ### **Content Access Control**
@@ -319,6 +377,24 @@ graph TD
 ---
 
 ## 📚 API Documentation
+
+### **Authentication Endpoints**
+```http
+# Email/Password Authentication
+POST /api/auth/register     # User registration with email/password
+POST /api/auth/login        # User login with email/password
+
+# OAuth Authentication
+GET /api/auth/google        # Google OAuth initiation
+GET /api/auth/google/callback # Google OAuth callback with account linking
+GET /api/auth/facebook      # Facebook OAuth initiation  
+GET /api/auth/facebook/callback # Facebook OAuth callback
+
+# User Profile Management
+GET /api/users/me          # Get current user profile
+PUT /api/users/me          # Update user profile
+POST /api/auth/logout      # Logout user (clears session)
+```
 
 ### **Public Endpoints**
 ```http
@@ -371,29 +447,67 @@ Content-Type: application/json
 
 ## 🛠️ User Journey Testing Scenarios
 
-### **Scenario 1: New User Onboarding**
+### **Scenario 1: New User Registration & Onboarding**
+
+**Email/Password Registration Flow:**
 1. **Visit:** http://localhost:3000
 2. **Browse:** Article listings as guest
 3. **Try Reading:** Hit paywall after excerpt
-4. **Register:** Click login → Google OAuth
-5. **First Content:** Use TYPE_A allowance (3 articles)
-6. **Hit Limit:** See upgrade prompt
-7. **Contact Admin:** Request tier upgrade
+4. **Register:** Click login → Toggle to "Create Account"
+5. **Fill Form:** Name, email, password, confirm password
+6. **Submit:** Instant account creation with JWT token
+7. **First Login:** Access dashboard with TYPE_A membership
+8. **Content Access:** Use allowance (3 articles, 3 videos)
+9. **Hit Limit:** See upgrade prompt with admin contact
+
+**Google OAuth Registration Flow:**
+1. **Visit:** http://localhost:3000
+2. **Quick Register:** Click "Continue with Google"
+3. **OAuth Flow:** Google authentication and consent
+4. **Account Creation:** Auto-populated profile from Google
+5. **Dashboard Access:** Immediate TYPE_A membership
+6. **Content Consumption:** Start with full allowance
+
+**Account Linking Scenario:**
+1. **Existing User:** Already has local account (test@example.com)
+2. **OAuth Attempt:** Clicks "Continue with Google" with same email
+3. **Automatic Linking:** System links Google profile to existing account
+4. **Notification:** "Google account linked successfully"
+5. **Dual Access:** Can now login via email/password OR Google OAuth
 
 ### **Scenario 2: Content Creator Journey**
-1. **Register:** As regular user
-2. **Request Access:** Email admin for editor role
-3. **Get Promoted:** Admin changes role to editor
-4. **Create Content:** Use dashboard form
-5. **Publish:** Article goes live immediately
-6. **Manage:** Edit and update content
+1. **Register:** Via email/password or Google OAuth
+2. **Build Reputation:** Engage with platform content
+3. **Request Access:** Email admin for editor role promotion
+4. **Get Promoted:** Admin changes role from user to editor
+5. **Dashboard Access:** New CMS interface appears
+6. **Create Content:** Use comprehensive article creation form
+7. **Publish:** Articles go live immediately for all users
+8. **Manage:** Edit, update, and track content performance
+
+### **Scenario 3: Returning User Experience**
+1. **Visit Login Page:** Choose preferred authentication method
+2. **Email/Password:** Quick login with saved credentials
+3. **OAuth Login:** One-click Google/Facebook authentication
+4. **Session Restore:** Automatic dashboard redirect
+5. **Content Resume:** Pick up where left off with usage tracking
+6. **Cross-Device:** Seamless experience across devices
 
 ### **Scenario 3: Platform Administration**
-1. **Admin Login:** firdausamerta@gmail.com
-2. **User Management:** Promote users to editors
-3. **Content Oversight:** Review and moderate
-4. **System Monitoring:** Check API health
-5. **Bulk Operations:** Manage multiple users
+1. **Admin Login:** firdausamerta@gmail.com (email/password or OAuth)
+2. **User Management:** Promote users to editors, manage roles
+3. **Membership Control:** Upgrade user tiers (TYPE_A → TYPE_B → TYPE_C)
+4. **Content Oversight:** Review, edit, and moderate all content
+5. **System Monitoring:** Check API health and user analytics
+6. **Bulk Operations:** Manage multiple users and content efficiently
+
+### **Scenario 4: Authentication Security Testing**
+1. **Password Validation:** Test weak passwords (rejected)
+2. **Duplicate Registration:** Try registering same email twice (blocked)
+3. **Invalid Login:** Test wrong credentials (proper error handling)
+4. **Account Linking:** Test OAuth with existing email (automatic linking)
+5. **Session Management:** Test token expiration and refresh
+6. **Cross-Browser:** Verify authentication across different browsers
 
 ---
 
@@ -515,7 +629,19 @@ graph TD
 ## ✅ Current Implementation Status
 
 ### **Completed Features** ✅
-- [x] User registration and Google OAuth
+- [x] **Comprehensive Authentication System**
+  - [x] Email/password registration and login with secure bcrypt hashing
+  - [x] Google OAuth integration with automatic account linking
+  - [x] Facebook OAuth support
+  - [x] Unified login/registration interface with dynamic form switching
+  - [x] JWT token authentication with configurable expiration
+  - [x] Real-time form validation and comprehensive error handling
+- [x] **Enhanced User Experience**
+  - [x] Toggle between login and registration modes on single page
+  - [x] Account linking notifications and status feedback
+  - [x] Loading states and progress indicators
+  - [x] Responsive design for all device types
+- [x] User registration and social authentication
 - [x] Role-based access control (User/Editor/Admin)
 - [x] Membership tiers with content limits
 - [x] Article creation and management
@@ -528,18 +654,21 @@ graph TD
 
 ### **In Development** 🚧
 - [ ] Video content management
-- [ ] Advanced content editor
-- [ ] User analytics dashboard
-- [ ] Email notifications
-- [ ] Content moderation tools
+- [ ] Advanced content editor with rich text editing
+- [ ] User analytics dashboard with detailed metrics
+- [ ] Email notifications for user actions
+- [ ] Content moderation tools and reporting
+- [ ] Advanced search filters and sorting options
 
 ### **Future Roadmap** 📋
-- [ ] Mobile application
-- [ ] Payment processing
-- [ ] Advanced search filters
-- [ ] Social media integration
-- [ ] Content recommendations
-- [ ] Multi-language support
+- [ ] Mobile application (React Native)
+- [ ] Payment processing for automatic tier upgrades
+- [ ] Advanced search filters and content recommendations
+- [ ] Social media integration and sharing
+- [ ] AI-powered content suggestions
+- [ ] Multi-language support and internationalization
+- [ ] Progressive Web App (PWA) capabilities
+- [ ] Real-time notifications and websockets
 
 ---
 
@@ -547,21 +676,31 @@ graph TD
 
 ### **User Engagement**
 - **Daily Active Users:** Target 1000+ DAU
-- **Content Consumption:** Average 5+ articles per user
-- **Session Duration:** 15+ minutes average
-- **Return Rate:** 70+ % weekly return
+- **Authentication Conversion:** 30+ % guest to registered user conversion
+- **Account Linking:** 80+ % OAuth users link to existing accounts successfully
+- **Session Duration:** 15+ minutes average browsing time
+- **Return Rate:** 70+ % weekly return for registered users
+
+### **Authentication Performance**
+- **Registration Success:** 95+ % successful registrations
+- **Login Speed:** <2s authentication response time
+- **OAuth Flow:** <10s complete Google/Facebook login process
+- **Account Linking:** 100% automatic linking for matching emails
+- **Security Compliance:** 0 password breaches, secure bcrypt hashing
 
 ### **Content Performance**
 - **Article Creation:** 10+ new articles weekly
-- **Video Uploads:** 5+ new videos weekly
+- **Content Engagement:** 85+ % article completion rate
 - **Search Success:** 90+ % query satisfaction
 - **Load Performance:** <2s page load times
+- **Mobile Usage:** 60+ % traffic from mobile devices
 
 ### **Business Metrics**
-- **User Conversion:** 20+ % guest to user
-- **Tier Upgrades:** 15+ % users upgrade tiers
-- **Content Engagement:** 85+ % article completion
+- **User Conversion:** 20+ % guest to user registration
+- **Tier Upgrades:** 15+ % users upgrade membership tiers
+- **Content Consumption:** Users hit 80+ % of tier limits monthly
 - **Platform Growth:** 25+ % monthly user growth
+- **OAuth Adoption:** 60+ % users prefer social login methods
 
 ---
 

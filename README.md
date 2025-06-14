@@ -151,21 +151,37 @@ docker-compose down
 
 ## 🔐 Authentication & Authorization
 
-### OAuth Providers
-- **Google OAuth 2.0**
-- **Facebook Login**
+### Authentication Methods
+- **Email/Password Registration & Login**
+  - Secure bcrypt password hashing (12 salt rounds)
+  - Password validation (minimum 6 characters)
+  - Account creation with instant JWT token
+  - Local account management
+- **OAuth Social Login**
+  - **Google OAuth 2.0** with account linking
+  - **Facebook Login** support
+  - Automatic account linking for existing email addresses
+  - Seamless integration between local and OAuth accounts
+
+### Authentication Features
+- **Unified Login Experience**: Single login page supporting both email/password and OAuth
+- **Account Linking**: Google OAuth automatically links to existing local accounts with matching emails
+- **Secure Password Management**: bcrypt hashing with salt rounds for maximum security
+- **Form Validation**: Real-time validation for registration and login forms
+- **Error Handling**: Comprehensive error messages and user feedback
 
 ### User Roles
-- **User**: Basic content access
-- **Editor**: Content creation and editing
-- **Admin**: Full system access
+- **User**: Basic content access with membership tier limits
+- **Editor**: Content creation and editing capabilities
+- **Admin**: Full system access and user management
 
 ### Security Features
-- JWT token authentication
-- Role-based access control
-- Session management
-- Rate limiting
-- Input validation
+- JWT token authentication with configurable expiration
+- Role-based access control (RBAC)
+- Password strength validation
+- Account linking security checks
+- Rate limiting and input validation
+- Secure session management
 
 ## 📊 Content Management
 
@@ -200,11 +216,20 @@ The API includes comprehensive **Swagger/OpenAPI 3.0** documentation with an int
 
 ### Authentication Endpoints
 ```
-GET    /api/auth/google          # Google OAuth
-GET    /api/auth/facebook        # Facebook OAuth
-GET    /api/auth/profile         # Get user profile
-PUT    /api/auth/membership      # Update membership
-POST   /api/auth/logout          # Logout user
+# Email/Password Authentication
+POST   /api/auth/register       # User registration with email/password
+POST   /api/auth/login          # User login with email/password
+
+# OAuth Authentication  
+GET    /api/auth/google         # Google OAuth initiation
+GET    /api/auth/google/callback # Google OAuth callback with account linking
+GET    /api/auth/facebook       # Facebook OAuth initiation
+GET    /api/auth/facebook/callback # Facebook OAuth callback
+
+# User Management
+GET    /api/auth/profile        # Get current user profile
+PUT    /api/auth/membership     # Update membership tier
+POST   /api/auth/logout         # Logout user
 ```
 
 ### Content Endpoints
@@ -357,6 +382,52 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [API Documentation](docs/API.md)
 - [**📚 Interactive Swagger Documentation**](docs/SWAGGER.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
+
+## ✅ Current Implementation Status
+
+### **Completed Features** ✅
+- [x] **Comprehensive Authentication System**
+  - [x] Email/password registration and login with secure bcrypt hashing
+  - [x] Google OAuth integration with automatic account linking
+  - [x] Facebook OAuth support
+  - [x] Unified login/registration interface with form switching
+  - [x] JWT token authentication with configurable expiration
+  - [x] Real-time form validation and error handling
+- [x] **User Management & Authorization**
+  - [x] Role-based access control (User/Editor/Admin)
+  - [x] Membership tiers with content limits (Type A/B/C)
+  - [x] Admin user management dashboard
+  - [x] User profile management
+- [x] **Content Management System**
+  - [x] Article creation and management
+  - [x] Content consumption tracking
+  - [x] Search functionality with debouncing
+  - [x] Category-based content organization
+- [x] **Frontend Features**
+  - [x] Responsive web design with Tailwind CSS
+  - [x] Dynamic form handling and validation
+  - [x] Modern, accessible UI components
+  - [x] OAuth integration with fallback handling
+- [x] **API & Documentation**
+  - [x] Interactive Swagger API documentation
+  - [x] Comprehensive endpoint coverage
+  - [x] Authentication testing in Swagger UI
+  - [x] Real-time API testing capabilities
+
+### **In Development** 🚧
+- [ ] Video content management system
+- [ ] Advanced content editor with rich text
+- [ ] User analytics dashboard
+- [ ] Email notification system
+- [ ] Content moderation tools
+
+### **Future Roadmap** 📋
+- [ ] Mobile application (React Native)
+- [ ] Payment processing for premium tiers
+- [ ] Advanced search filters and sorting
+- [ ] Social media sharing integration
+- [ ] AI-powered content recommendations
+- [ ] Multi-language support
 
 ## 🐛 Troubleshooting
 
