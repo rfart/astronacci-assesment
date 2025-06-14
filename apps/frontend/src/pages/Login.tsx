@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,6 +28,7 @@ const Login: React.FC = () => {
   });
   
   const { login: authLogin } = useAuth();
+  const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
     window.location.href = authService.getGoogleAuthUrl();
@@ -44,8 +46,10 @@ const Login: React.FC = () => {
     try {
       const response = await authService.login(loginForm.email, loginForm.password);
       authLogin(response.data.token);
+      // Redirect to articles page after successful login
+      navigate('/articles');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message ?? 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -69,8 +73,10 @@ const Login: React.FC = () => {
         registerForm.password
       );
       authLogin(response.data.token);
+      // Redirect to articles page after successful registration
+      navigate('/articles');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message ?? 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -184,7 +190,10 @@ const Login: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+              {(() => {
+                if (loading) return 'Processing...';
+                return isLogin ? 'Sign In' : 'Create Account';
+              })()}
             </button>
           </div>
         </form>

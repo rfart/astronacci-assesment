@@ -9,12 +9,20 @@ const AuthCallback: React.FC = () => {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const linked = searchParams.get('linked');
     
     if (token) {
       login(token);
-      navigate('/', { replace: true });
+      // Redirect to articles page after successful OAuth authentication
+      // Show a brief message if account was linked
+      if (linked === 'true') {
+        // You could show a toast notification here if you have a toast system
+        console.log('Google account successfully linked to your existing account');
+      }
+      navigate('/articles', { replace: true });
     } else {
       // Handle error case
+      console.error('Authentication failed: No token received');
       navigate('/login', { replace: true });
     }
   }, [searchParams, login, navigate]);
