@@ -28,8 +28,11 @@ RUN npm run build
 WORKDIR /usr/src/app
 RUN npm ci --only=production
 
+# Set working directory to backend for startup
+WORKDIR /usr/src/app/apps/backend
+
 # Expose port
-EXPOSE 5000
+EXPOSE 5001
 
 # Set environment to production
 ENV NODE_ENV=production
