@@ -59,7 +59,7 @@ export class VideoController {
     
     const hasMoreContent = totalAvailable > membershipLimit;
     const membershipMessage = hasMoreContent 
-      ? `You can access ${membershipLimit} videos with ${userMembership} membership. ${totalAvailable - membershipLimit} more videos available with upgrade.`
+      ? `You can access ${membershipLimit} videos with ${userMembership} membership. More videos available with upgrade.`
       : null;
     
     return { effectiveLimit, hasMoreContent, membershipMessage, membershipLimit, used: user.videosWatched };

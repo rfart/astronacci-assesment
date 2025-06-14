@@ -59,7 +59,7 @@ export class ArticleController {
     
     const hasMoreContent = totalAvailable > membershipLimit;
     const membershipMessage = hasMoreContent 
-      ? `You can access ${membershipLimit} articles with ${userMembership} membership. ${totalAvailable - membershipLimit} more articles available with upgrade.`
+      ? `You can access ${membershipLimit} articles with ${userMembership} membership. More articles available with upgrade.`
       : null;
     
     return { effectiveLimit, hasMoreContent, membershipMessage, membershipLimit, used: user.articlesRead };
