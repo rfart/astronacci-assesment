@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 interface ArticleForm {
   title: string;
@@ -37,32 +38,14 @@ const Dashboard: React.FC = () => {
     setMessage(null);
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const articleData = {
         ...form,
         tags: form.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
       };
 
-      const response = await fetch('http://localhost:5001/api/articles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(articleData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create article');
-      }
-
-      const result = await response.json();
-      console.log('Article created:', result);
+      const response = await api.post('/articles', articleData);
+      
+      console.log('Article created:', response.data);
       setMessage({ type: 'success', text: 'Article created successfully!' });
       
       // Reset form
@@ -75,11 +58,9 @@ const Dashboard: React.FC = () => {
         featuredImage: ''
       });
 
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : 'Failed to create article' 
-      });
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message ?? 'Failed to create article';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
     }

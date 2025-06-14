@@ -197,6 +197,84 @@ export class AuthController {
     }
   };
 
+  // Register admin with email and password (special endpoint)
+  public registerAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { name, email, password, adminSecret }: RegisterRequest & { adminSecret: string } = req.body;
+
+      // Check admin secret (simple protection mechanism)
+      const requiredAdminSecret = process.env.ADMIN_REGISTRATION_SECRET || 'astronacci-admin-2024';
+      if (adminSecret !== requiredAdminSecret) {
+        res.status(403).json({
+          success: false,
+          message: 'Invalid admin registration secret'
+        });
+        return;
+      }
+
+      // Validation
+      if (!name || !email || !password) {
+        res.status(400).json({
+          success: false,
+          message: 'Name, email, and password are required'
+        });
+        return;
+      }
+
+      if (password.length < 8) {
+        res.status(400).json({
+          success: false,
+          message: 'Admin password must be at least 8 characters long'
+        });
+        return;
+      }
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        res.status(409).json({
+          success: false,
+          message: 'User with this email already exists'
+        });
+        return;
+      }
+
+      // Create new admin user with unique socialId for local admin
+      const adminData = {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        password,
+        socialProvider: 'local' as const,
+        // Don't set socialId for local users to avoid index conflicts
+        membershipTier: MembershipTier.TYPE_C, // Admin gets unlimited access
+        role: UserRole.ADMIN,
+        isActive: true
+      };
+
+      const adminUser = new User(adminData);
+      await adminUser.save();
+
+      // Generate token
+      const token = this.generateToken((adminUser._id as any).toString());
+
+      // Return user data without password
+      const userResponse = adminUser.toJSON();
+      delete userResponse.password;
+
+      res.status(201).json({
+        success: true,
+        message: 'Admin user registered successfully',
+        data: {
+          user: userResponse,
+          token
+        }
+      });
+    } catch (error) {
+      console.error('Admin registration error:', error);
+      next(error);
+    }
+  };
+
   // Login with email and password
   public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

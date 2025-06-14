@@ -186,6 +186,85 @@ router.post('/register', authController.register);
 
 /**
  * @swagger
+ * /api/auth/register/admin:
+ *   post:
+ *     summary: Register a new admin user with special secret
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - adminSecret
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Admin's full name
+ *                 example: "Admin User"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Admin's email address
+ *                 example: "admin@example.com"
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 description: Admin's password (minimum 8 characters)
+ *                 example: "adminpassword123"
+ *               adminSecret:
+ *                 type: string
+ *                 description: Special secret for admin registration
+ *                 example: "astronacci-admin-2024"
+ *     responses:
+ *       201:
+ *         description: Admin registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Admin user registered successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     token:
+ *                       type: string
+ *                       description: JWT authentication token
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Invalid admin secret
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: User with this email already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/register/admin', authController.registerAdmin);
+
+/**
+ * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Login with email and password

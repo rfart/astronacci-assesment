@@ -53,6 +53,6 @@ export const authService = {
   },
 
   // OAuth URLs
-  getGoogleAuthUrl: (): string => `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`,
-  getFacebookAuthUrl: (): string => `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/facebook`,
+  getGoogleAuthUrl: (): string => `${process.env.REACT_APP_API_URL ?? 'http://localhost:5001/api'}/auth/google`,
+  getFacebookAuthUrl: (): string => `${process.env.REACT_APP_API_URL ?? 'http://localhost:5001/api'}/auth/facebook`,
 };
