@@ -113,10 +113,11 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        // Use correct backend endpoint for analytics
         const res = await api.get('/cms/analytics');
         setAnalytics(res.data.data);
       } catch (e) {
-        // ignore for now
+        setAnalytics(null); // Show no data if error
       }
     };
     if (user && canCreateArticles) fetchAnalytics();

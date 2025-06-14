@@ -26,13 +26,9 @@ export class CMSController {
         Article.countDocuments({ isPublished: true }),
         Video.countDocuments({ isPublished: true }),
         Article.find()
-          .populate('author', 'name')
-          .populate('category', 'name')
           .sort({ createdAt: -1 })
           .limit(5),
         Video.find()
-          .populate('author', 'name')
-          .populate('category', 'name')
           .sort({ createdAt: -1 })
           .limit(5),
         Category.aggregate([
