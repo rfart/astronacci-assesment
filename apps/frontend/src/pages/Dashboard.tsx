@@ -34,6 +34,12 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+    // Validate required fields
+    if (!form.title.trim() || !form.content.trim() || !form.excerpt.trim() || !form.category.trim()) {
+      setMessage({ type: 'error', text: 'Please fill in all required fields (Title, Excerpt, Content, and Category)' });
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
@@ -136,12 +142,13 @@ const Dashboard: React.FC = () => {
 
             <div>
               <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">
-                Excerpt
+                Excerpt *
               </label>
               <textarea
                 name="excerpt"
                 id="excerpt"
                 rows={2}
+                required
                 value={form.excerpt}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
@@ -168,12 +175,13 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                  Category
+                  Category *
                 </label>
                 <input
                   type="text"
                   name="category"
                   id="category"
+                  required
                   value={form.category}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
