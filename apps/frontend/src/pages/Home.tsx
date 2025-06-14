@@ -5,6 +5,20 @@ import { useAuth } from '../contexts/AuthContext';
 const Home: React.FC = () => {
   const { user } = useAuth();
 
+  // Format membership tier for display
+  const getMembershipDisplayName = (tier: string) => {
+    switch (tier) {
+      case 'TYPE_A':
+        return 'Basic (3 articles, 3 videos)';
+      case 'TYPE_B':
+        return 'Standard (10 articles, 10 videos)';
+      case 'TYPE_C':
+        return 'Premium (Unlimited)';
+      default:
+        return tier;
+    }
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Hero Section */}
@@ -121,7 +135,7 @@ const Home: React.FC = () => {
             Your Current Membership
           </h3>
           <p className="text-blue-700">
-            You are currently on the <strong>{user.membershipType}</strong> plan.
+            You are currently on the <strong>{getMembershipDisplayName(user.membershipTier)}</strong> plan.
           </p>
           <Link
             to="/profile"

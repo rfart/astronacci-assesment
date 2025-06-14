@@ -6,6 +6,20 @@ const Profile: React.FC = () => {
 
   if (!user) return null;
 
+  // Format membership tier for display
+  const getMembershipDisplayName = (tier: string) => {
+    switch (tier) {
+      case 'TYPE_A':
+        return 'Basic (3 articles, 3 videos)';
+      case 'TYPE_B':
+        return 'Standard (10 articles, 10 videos)';
+      case 'TYPE_C':
+        return 'Premium (Unlimited)';
+      default:
+        return tier;
+    }
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="bg-white shadow rounded-lg">
@@ -24,7 +38,7 @@ const Profile: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Membership Type</label>
-              <p className="mt-1 text-sm text-gray-900">{user.membershipType}</p>
+              <p className="mt-1 text-sm text-gray-900">{getMembershipDisplayName(user.membershipTier)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Role</label>

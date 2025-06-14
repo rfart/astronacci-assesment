@@ -6,7 +6,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  membershipType: MembershipTier;
+  membershipTier: MembershipTier;
   role: 'user' | 'editor' | 'admin';
   isActive: boolean;
   createdAt: string;
@@ -41,8 +41,8 @@ export const authService = {
   },
 
   // Update membership
-  updateMembership: async (membershipType: MembershipTier): Promise<User> => {
-    const response = await api.put('/auth/membership', { membershipType });
+  updateMembership: async (membershipTier: MembershipTier): Promise<User> => {
+    const response = await api.put('/auth/membership', { membershipTier });
     return response.data.data;
   },
 
