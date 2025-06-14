@@ -116,7 +116,71 @@ router.get('/',
 router.get('/stats', 
   authenticateToken, 
   authorizeRole(['admin']), 
-  userController.getUserStats
+  userController.getUserStatsAdmin
+);
+
+/**
+ * @swagger
+ * /api/users/my-stats:
+ *   get:
+ *     summary: Get current user's creation stats and limits
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User stats retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         membershipTier:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                     created:
+ *                       type: object
+ *                       properties:
+ *                         articles:
+ *                           type: number
+ *                         videos:
+ *                           type: number
+ *                     limits:
+ *                       type: object
+ *                       properties:
+ *                         articles:
+ *                           type: number
+ *                         videos:
+ *                           type: number
+ *                     remaining:
+ *                       type: object
+ *                       properties:
+ *                         articles:
+ *                           type: number
+ *                         videos:
+ *                           type: number
+ *                     canCreateMore:
+ *                       type: object
+ *                       properties:
+ *                         articles:
+ *                           type: boolean
+ *                         videos:
+ *                           type: boolean
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/my-stats', 
+  authenticateToken, 
+  userController.getMyStats
 );
 
 /**

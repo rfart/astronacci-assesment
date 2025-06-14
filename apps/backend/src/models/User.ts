@@ -80,7 +80,7 @@ const userSchema = new Schema<UserDocument>({
 
 // Indexes
 userSchema.index({ email: 1 });
-userSchema.index({ socialId: 1, socialProvider: 1 });
+userSchema.index({ socialId: 1, socialProvider: 1 }, { sparse: true });
 userSchema.index({ membershipTier: 1 });
 
 // Pre-save middleware for password hashing

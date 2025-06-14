@@ -28,35 +28,12 @@ export class VideoController {
         ];
       }
 
-      // Apply membership limits
-      let videoLimit = MEMBERSHIP_LIMITS[MembershipTier.TYPE_A].videos;
-      if (user) {
-        const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
-        videoLimit = MEMBERSHIP_LIMITS[userMembership].videos;
-      }
-
       const skip = (Number(page) - 1) * Number(limit);
-      const queryLimit = videoLimit === -1 ? Number(limit) : Math.min(Number(limit), videoLimit - skip);
-
-      if (queryLimit <= 0) {
-        res.json({
-          success: true,
-          data: [],
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: 0,
-            pages: 0,
-          },
-          message: 'Membership limit reached',
-        });
-        return;
-      }
 
       const videos = await Video.find(query)
         .sort({ publishedAt: -1 })
         .skip(skip)
-        .limit(queryLimit);
+        .limit(Number(limit));
 
       const total = await Video.countDocuments(query);
 

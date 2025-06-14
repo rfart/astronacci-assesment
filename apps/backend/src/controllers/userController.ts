@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from "../models/User";
+import { Article } from "../models/Article";
+import { Video } from "../models/Video";
+import { MEMBERSHIP_LIMITS, MembershipTier } from '@astronacci/shared';
 
 export class UserController {
   // Get all users (Admin only)
@@ -137,7 +140,7 @@ export class UserController {
   };
 
   // Get user stats (Admin only)
-  public getUserStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getUserStatsAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const totalUsers = await User.countDocuments();
       const membershipStats = await User.aggregate([
@@ -158,13 +161,99 @@ export class UserController {
         }
       ]);
 
+      const articleStats = await Article.aggregate([
+        {
+          $group: {
+            _id: '$author',
+            articleCount: { $sum: 1 }
+          }
+        }
+      ]);
+
+      const videoStats = await Video.aggregate([
+        {
+          $group: {
+            _id: '$author',
+            videoCount: { $sum: 1 }
+          }
+        }
+      ]);
+
+      // Merge article and video stats into user stats
+      const userStats = membershipStats.map((membership) => {
+        const role = roleStats.find(r => r._id === membership._id) || { count: 0 };
+        const articles = articleStats.find(a => a._id === membership._id) || { articleCount: 0 };
+        const videos = videoStats.find(v => v._id === membership._id) || { videoCount: 0 };
+
+        return {
+          membershipTier: membership._id,
+          userCount: membership.count,
+          roleCount: role.count,
+          articleCount: articles.articleCount,
+          videoCount: videos.videoCount,
+        };
+      });
+
       res.json({
         success: true,
         data: {
           totalUsers,
-          membershipStats,
-          roleStats,
+          userStats,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Get user stats (articles created, videos created, limits)
+  public getMyStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+        return;
+      }
+
+      // Get counts of content created by user
+      const articlesCreated = await Article.countDocuments({ author: user._id });
+      const videosCreated = await Video.countDocuments({ author: user._id });
+
+      // Get user's membership limits
+      const userMembership = (user.membershipTier as MembershipTier) ?? MembershipTier.TYPE_A;
+      const limits = MEMBERSHIP_LIMITS[userMembership];
+
+      // Calculate remaining limits
+      const remainingArticles = limits.articles === -1 ? -1 : Math.max(0, limits.articles - articlesCreated);
+      const remainingVideos = limits.videos === -1 ? -1 : Math.max(0, limits.videos - videosCreated);
+
+      res.json({
+        success: true,
+        data: {
+          user: {
+            membershipTier: user.membershipTier,
+            role: user.role
+          },
+          created: {
+            articles: articlesCreated,
+            videos: videosCreated
+          },
+          limits: {
+            articles: limits.articles,
+            videos: limits.videos
+          },
+          remaining: {
+            articles: remainingArticles,
+            videos: remainingVideos
+          },
+          canCreateMore: {
+            articles: limits.articles === -1 || articlesCreated < limits.articles,
+            videos: limits.videos === -1 || videosCreated < limits.videos
+          }
+        }
       });
     } catch (error) {
       next(error);
