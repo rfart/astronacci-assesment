@@ -10,10 +10,7 @@ export interface Article {
     name: string;
     email: string;
   };
-  category: {
-    _id: string;
-    name: string;
-  };
+  category: string;
   tags: string[];
   featuredImage?: string;
   isPublished: boolean;

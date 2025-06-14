@@ -11,7 +11,6 @@ export class ArticleController {
   public getArticles = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
-      const user = req.user;
 
       // Build query
       const query: any = {};

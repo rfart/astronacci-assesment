@@ -11,7 +11,6 @@ export class VideoController {
   public getVideos = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { page = 1, limit = 10, category, search } = req.query;
-      const user = req.user;
 
       // Build query
       const query: any = {};
@@ -99,9 +98,10 @@ export class VideoController {
   // Create video (Admin/CMS)
   public createVideo = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const user = req.user;
       const videoData = {
         ...req.body,
-        author: (req.user as any)?._id?.toString() ?? (req.user as any)?.name ?? 'Unknown',
+        author: user?._id?.toString() ?? user?.name ?? 'Unknown',
       };
 
       const video = new Video(videoData);
