@@ -6,9 +6,10 @@ interface Props {
   message: { type: 'success' | 'error', text: string } | null;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  cmsStats?: any;
 }
 
-const CreateVideo: React.FC<Props> = ({ form, loading, message, handleChange, handleSubmit }) => {
+const CreateVideo: React.FC<Props> = ({ form, loading, message, handleChange, handleSubmit, cmsStats }) => {
   return (
     <>
       {/* Video Form */}
@@ -111,6 +112,22 @@ const CreateVideo: React.FC<Props> = ({ form, loading, message, handleChange, ha
             placeholder="tag1, tag2, tag3"
           />
           <p className="mt-1 text-xs text-gray-500">Separate tags with commas</p>
+        </div>
+        <div>
+          <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+            Duration (seconds) *
+          </label>
+          <input
+            type="number"
+            name="duration"
+            id="duration"
+            required
+            min={1}
+            value={form.duration}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            placeholder="Enter duration in seconds"
+          />
         </div>
         <div className="flex justify-end">
           <button

@@ -16,6 +16,16 @@ interface ArticleForm {
   featuredImage: string;
 }
 
+interface VideoForm {
+  title: string;
+  description: string;
+  url: string;
+  thumbnail: string;
+  category: string;
+  tags: string;
+  duration: string;
+}
+
 // --- CMS Dashboard Additions ---
 interface CMSStats {
   statistics: {
@@ -70,11 +80,22 @@ const Dashboard: React.FC = () => {
     tags: '',
     featuredImage: ''
   });
+  const [videoForm, setVideoForm] = useState<VideoForm>({
+    title: '',
+    description: '',
+    url: '',
+    thumbnail: '',
+    category: '',
+    tags: '',
+    duration: ''
+  });
   const [cmsStats, setCmsStats] = useState<CMSStats | null>(null);
   const [analytics, setAnalytics] = useState<ContentAnalytics | null>(null);
   const [users, setUsers] = useState<UserList[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('create-article');
+  const [videoMessage, setVideoMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   // Check if user has permission to create articles
   const canCreateArticles = user?.role === 'admin' || user?.role === 'editor';
@@ -194,9 +215,51 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleVideoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Validate required fields for video
+    if (!videoForm.title.trim() || !videoForm.description.trim() || !videoForm.url.trim() || !videoForm.thumbnail.trim() || !videoForm.category.trim() || !videoForm.duration.trim()) {
+      setVideoMessage({ type: 'error', text: 'Please fill in all required fields (Title, Description, URL, Thumbnail, Category, and Duration)' });
+      return;
+    }
+    setVideoLoading(true);
+    setVideoMessage(null);
+    try {
+      const videoData = {
+        ...videoForm,
+        duration: Number(videoForm.duration),
+        tags: videoForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      };
+      await api.post('/videos', videoData);
+      setVideoMessage({ type: 'success', text: 'Video created successfully!' });
+      // Reset form
+      setVideoForm({
+        title: '',
+        description: '',
+        url: '',
+        thumbnail: '',
+        category: '',
+        tags: '',
+        duration: ''
+      });
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message ?? 'Failed to create video';
+      setVideoMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({
       ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setVideoForm({
+      ...videoForm,
       [e.target.name]: e.target.value
     });
   };
@@ -266,11 +329,12 @@ const Dashboard: React.FC = () => {
       )}
       {activeTab === 'create-video' && (
         <CreateVideo
-          form={form}
-          loading={loading}
-          message={message}
-          handleChange={handleChange}
-          handleSubmit={handleSubmit}
+          cmsStats={cmsStats}
+          form={videoForm}
+          loading={videoLoading}
+          message={videoMessage}
+          handleChange={handleVideoChange}
+          handleSubmit={handleVideoSubmit}
         />
       )}
       {activeTab === 'analytics' && (
