@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { User, authService } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
 }
 
@@ -71,13 +71,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(updatedUser);
   };
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     loading,
     login,
     logout,
     updateUser,
-  };
+  }), [user, loading]);
 
   return (
     <AuthContext.Provider value={value}>

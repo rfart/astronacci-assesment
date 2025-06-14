@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
@@ -8,13 +8,16 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
+  const handleLogout = () => {
+    logout().then(() => {
+      navigate('/login');
+    }).catch((error) => {
       console.error('Logout failed:', error);
-    }
+      // Still navigate to login even if logout fails
+      navigate('/login');
+    });
   };
 
   return (
